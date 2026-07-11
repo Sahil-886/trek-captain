@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ⛰ Trek Captain
+
+A production-ready group trek management platform for trek captains/organizers in India. Built with Next.js 14+, TypeScript, and Tailwind CSS.
+
+## Features
+
+- 🏔 **Trek Management** — Create, edit, and manage multiple treks
+- 👥 **Participant Tracking** — Add participants, track confirmations, one-tap WhatsApp/call
+- 💰 **Payment Tracking** — Record UPI/Cash/Bank payments, auto-detect payment status, send reminders
+- 🗺 **Itinerary Builder** — Day-wise timeline with activities, meals, treks, and rest stops
+- 📢 **Announcements** — Post updates, mark urgent, share on WhatsApp
+- 📊 **Dashboard** — Overview stats, upcoming treks, recent activity feed
+- 📱 **Fully Responsive** — Desktop sidebar, mobile bottom nav
+
+## Tech Stack
+
+- **Framework:** Next.js 14+ (App Router, TypeScript)
+- **Styling:** Tailwind CSS (custom components)
+- **Icons:** lucide-react
+- **Data:** localStorage with typed abstraction (Supabase-ready)
+- **Fonts:** Sora + Inter (Google Fonts)
 
 ## Getting Started
 
-First, run the development server:
+### Local Development
 
 ```bash
+# Install dependencies
+npm install
+
+# Start dev server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to see the app.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Demo data is automatically seeded on first load.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Production Build
 
-## Learn More
+```bash
+npm run build
+npm start
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Deploy to Vercel
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Push this repo to GitHub
+2. Go to [vercel.com/new](https://vercel.com/new)
+3. Import the repository
+4. Framework preset: **Next.js** (auto-detected)
+5. Click **Deploy**
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+No environment variables needed. The app uses `localStorage` for data persistence.
 
-## Deploy on Vercel
+## Project Structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+app/
+├── page.tsx                  # Landing page
+├── layout.tsx                # Root layout (fonts, metadata)
+└── dashboard/
+    ├── layout.tsx            # Sidebar + bottom nav layout
+    ├── page.tsx              # Dashboard home
+    ├── treks/
+    │   ├── page.tsx          # Treks list
+    │   └── [id]/page.tsx     # Trek detail (5 tabs)
+    └── settings/page.tsx     # Settings
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+components/
+├── ui/                       # Reusable UI components
+└── treks/                    # Trek tab components
+
+lib/
+├── types.ts                  # TypeScript interfaces
+├── store.ts                  # localStorage abstraction
+├── seed.ts                   # Demo data
+└── utils.ts                  # Formatting helpers
+```
+
+## License
+
+MIT
