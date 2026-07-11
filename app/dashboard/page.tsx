@@ -17,19 +17,23 @@ import { DifficultyBadge, StatusBadge } from "@/components/ui/Badge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { CardSkeleton } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/Button";
-import { getTreks, getParticipants, getPayments, getDashboardStats } from "@/lib/store";
+import { getTreks, getParticipants, getPayments, getDashboardStats, getCaptain } from "@/lib/store";
 import { formatINR, formatDate } from "@/lib/utils";
-import type { Trek, Participant, Payment } from "@/lib/types";
+import type { Trek, Participant, Payment, Captain } from "@/lib/types";
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ activeTreks: 0, totalParticipants: 0, amountCollected: 0, pendingDues: 0 });
   const [treks, setTreks] = useState<Trek[]>([]);
   const [activities, setActivities] = useState<{ id: string; type: string; text: string; time: string; icon: React.ReactNode }[]>([]);
+  const [captain, setCaptain] = useState<Captain | null>(null);
 
   useEffect(() => {
     const s = getDashboardStats();
     setStats(s);
+
+    const c = getCaptain();
+    setCaptain(c);
 
     const allTreks = getTreks();
     setTreks(allTreks.filter((t) => t.status === "Upcoming" || t.status === "Ongoing"));
@@ -95,11 +99,11 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold font-[family-name:var(--font-sora-family)]">
-            Dashboard
+          <h1 className="text-2xl md:text-3xl font-extrabold font-[family-name:var(--font-sora-family)]">
+            Welcome back, {captain?.name || "Captain"} 👋
           </h1>
           <p className="text-text-muted text-sm mt-1">
-            Overview of your trek operations
+            Overview of your trek operations for {captain?.orgName || "Summit Seekers"}
           </p>
         </div>
         <Link href="/dashboard/treks">

@@ -11,7 +11,8 @@ import {
   X,
 } from "lucide-react";
 import { ToastProvider } from "@/components/ui/Toast";
-import { initializeStore } from "@/lib/store";
+import { initializeStore, getCaptain } from "@/lib/store";
+import type { Captain } from "@/lib/types";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -26,10 +27,12 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [captain, setCaptain] = useState<Captain | null>(null);
 
   useEffect(() => {
     initializeStore();
-  }, []);
+    setCaptain(getCaptain());
+  }, [pathname]);
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
@@ -69,9 +72,17 @@ export default function DashboardLayout({
               );
             })}
           </nav>
-          <div className="p-4 border-t border-border">
-            <p className="text-xs text-text-dim">Trek Captain v1.0</p>
-          </div>
+          {captain && (
+            <div className="p-4 border-t border-border flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-trail-orange flex items-center justify-center text-white text-xs font-bold shadow-inner">
+                {captain.avatarInitials || "CP"}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-text-primary truncate">{captain.name}</p>
+                <p className="text-[10px] text-text-muted truncate">{captain.orgName}</p>
+              </div>
+            </div>
+          )}
         </aside>
 
         {/* Mobile Sidebar Overlay */}
@@ -119,6 +130,17 @@ export default function DashboardLayout({
                   );
                 })}
               </nav>
+              {captain && (
+                <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border flex items-center gap-3 bg-card">
+                  <div className="w-9 h-9 rounded-full bg-trail-orange flex items-center justify-center text-white text-xs font-bold shadow-inner">
+                    {captain.avatarInitials || "CP"}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-text-primary truncate">{captain.name}</p>
+                    <p className="text-[10px] text-text-muted truncate">{captain.orgName}</p>
+                  </div>
+                </div>
+              )}
             </aside>
           </div>
         )}
