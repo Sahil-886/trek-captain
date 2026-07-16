@@ -104,6 +104,12 @@ function mapTrek(r: DbTrek): Trek {
     highlights: r.highlights || "",
     notes: r.notes || "",
     isPublished: r.is_published ?? false,
+    emergencyContactName: r.emergency_contact_name,
+    emergencyContactPhone: r.emergency_contact_phone,
+    nearestHospital: r.nearest_hospital,
+    networkAvailability: r.network_availability,
+    safetyNotes: r.safety_notes,
+    fitnessRequirement: r.fitness_requirement,
     createdAt: r.created_at || "",
   };
 }
@@ -369,6 +375,12 @@ export async function updateTrek(
   if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
   if (updates.isPublished !== undefined) dbUpdates.is_published = updates.isPublished;
   if (updates.slug !== undefined) dbUpdates.slug = updates.slug;
+  if (updates.emergencyContactName !== undefined) dbUpdates.emergency_contact_name = updates.emergencyContactName;
+  if (updates.emergencyContactPhone !== undefined) dbUpdates.emergency_contact_phone = updates.emergencyContactPhone;
+  if (updates.nearestHospital !== undefined) dbUpdates.nearest_hospital = updates.nearestHospital;
+  if (updates.networkAvailability !== undefined) dbUpdates.network_availability = updates.networkAvailability;
+  if (updates.safetyNotes !== undefined) dbUpdates.safety_notes = updates.safetyNotes;
+  if (updates.fitnessRequirement !== undefined) dbUpdates.fitness_requirement = updates.fitnessRequirement;
 
   const { data, error } = await supabase()
     .from("treks")

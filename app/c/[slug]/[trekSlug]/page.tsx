@@ -12,12 +12,21 @@ import {
   ArrowLeft,
   CheckCircle2,
   XCircle,
+  ShieldCheck,
+  Signal,
+  Activity,
+  Info,
+  Phone,
+  Megaphone,
+  Users
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { formatDate, getWhatsAppLink } from "@/lib/utils";
+import { formatDate, getWhatsAppLink, getRelativeTimeString } from "@/lib/utils";
 import { DifficultyBadge } from "@/components/ui/Badge";
 import type { ItineraryItem } from "@/lib/types";
 import ViewLogger from "@/components/ViewLogger";
+import PublicItinerary from "./PublicItinerary";
+import ImageGallery from "./ImageGallery";
 
 interface PageProps {
   params: Promise<{ slug: string; trekSlug: string }>;
@@ -97,14 +106,15 @@ export default async function PublicTrekDetailPage({ params }: PageProps) {
     .eq("is_public", true)
     .order("created_at", { ascending: false });
 
-  // Fetch other treks by this captain
-  const { data: otherTreks } = await supabase
+  // Fetch completed treks count for trust strip
+  const { count: completedCount } = await supabase
     .from("treks")
-    .select("*")
+    .select("*", { count: "exact", head: true })
     .eq("captain_id", captain.id)
-    .eq("is_published", true)
-    .neq("id", trek.id)
-    .limit(3);
+    .eq("status", "Completed")
+    .eq("is_published", true);
+
+  const completedTreksHostedCount = completedCount || 0;
 
   // Prefilled WhatsApp message
   const waMessage = `Hi ${captain.full_name}! 👋\n\nI want to book spots for *${trek.title}* starting on *${formatDate(trek.start_date)}*.\n\nAre spots available?`;
@@ -114,6 +124,18 @@ export default async function PublicTrekDetailPage({ params }: PageProps) {
   const packingList: string[] = (trek.packing_list as any) || [];
   const inclusions: string[] = (trek.inclusions as any) || [];
   const exclusions: string[] = (trek.exclusions as any) || [];
+  const gallery: string[] = (trek.gallery as any) || [];
+
+  // Safety block fields configuration
+  const hasSafetyInfo =
+    trek.emergency_contact_name ||
+    trek.emergency_contact_phone ||
+    trek.nearest_hospital ||
+    trek.network_availability ||
+    trek.safety_notes ||
+    trek.fitness_requirement;
+
+  const accentColor = captain.accent_color || "#FF6B2C";
 
   // JSON-LD Event Schema Markup
   const eventJsonLd = {
@@ -149,8 +171,45 @@ export default async function PublicTrekDetailPage({ params }: PageProps) {
     },
   };
 
+  // Reusable Trust Strip JSX
+  const renderTrustStrip = () => (
+    <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
+      <h4 className="text-xs font-bold text-text-dim uppercase tracking-wider">
+        Trust & Quality
+      </h4>
+      <div className="space-y-3">
+        <div className="flex items-center gap-2.5 text-xs text-text-secondary">
+          <Users className="w-4 h-4 text-accent shrink-0" />
+          <span>
+            Led by{" "}
+            <Link href={`/c/${slug}`} className="font-semibold text-text-primary hover:underline">
+              {captain.brand_name}
+            </Link>
+          </span>
+        </div>
+        
+        {completedTreksHostedCount > 0 && (
+          <div className="flex items-center gap-2.5 text-xs text-text-secondary">
+            <Compass className="w-4 h-4 text-alpine-green shrink-0" />
+            <span>{completedTreksHostedCount} adventure{completedTreksHostedCount > 1 ? "s" : ""} hosted</span>
+          </div>
+        )}
+
+        {trek.emergency_contact_phone && (
+          <div className="flex items-center gap-2.5 text-xs text-text-secondary">
+            <CheckCircle2 className="w-4 h-4 text-alpine-green shrink-0" />
+            <span>Emergency contact shared</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen pb-20 topo-bg">
+    <div 
+      className="min-h-screen pb-20 topo-bg"
+      style={{ "--accent": accentColor } as React.CSSProperties}
+    >
       <ViewLogger slug={slug} trekSlug={trekSlug} />
       <script
         type="application/ld+json"
@@ -232,44 +291,33 @@ export default async function PublicTrekDetailPage({ params }: PageProps) {
 
             {/* Meeting Point */}
             {trek.meeting_point && (
-              <div className="border-t border-border pt-6 space-y-2">
+              <div className="border-t border-border pt-6 space-y-3">
                 <h3 className="font-bold text-base font-[family-name:var(--font-sora-family)] text-text-primary">
                   Meeting Point
                 </h3>
-                <p className="text-sm text-text-muted">
-                  {trek.meeting_point}
-                </p>
+                <div className="bg-charcoal/30 border border-border p-4 rounded-xl flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                  <p className="text-sm text-text-muted">
+                    {trek.meeting_point}
+                  </p>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(trek.meeting_point)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-1 bg-accent/15 hover:bg-accent/20 border border-accent/20 text-accent rounded-lg px-3 py-1.5 text-xs font-bold transition-colors shrink-0 cursor-pointer"
+                  >
+                    <MapPin className="w-3.5 h-3.5" />
+                    Open in Maps
+                  </a>
+                </div>
               </div>
             )}
           </div>
 
-          {/* Itinerary */}
-          {itinerary.length > 0 && (
-            <div className="bg-card border border-border rounded-2xl p-6 md:p-8 space-y-6">
-              <h3 className="font-bold text-lg font-[family-name:var(--font-sora-family)] text-text-primary">
-                Day-Wise Itinerary
-              </h3>
-              <div className="relative pl-6 space-y-6">
-                <div className="absolute left-1.5 top-2 bottom-2 w-0.5 bg-border" />
-                {itinerary.map((item, idx) => (
-                  <div key={idx} className="relative space-y-1">
-                    <div className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-accent ring-4 ring-charcoal" />
-                    <span className="text-[10px] text-accent uppercase tracking-wider font-bold">
-                      Day {item.day}
-                    </span>
-                    <h4 className="font-semibold text-sm text-text-primary">
-                      {item.title}
-                    </h4>
-                    {item.description && (
-                      <p className="text-xs text-text-muted leading-relaxed">
-                        {item.description}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Interactive timeline itinerary */}
+          <PublicItinerary itinerary={itinerary} accentColor={accentColor} />
+
+          {/* Image Gallery with lightbox */}
+          <ImageGallery gallery={gallery} />
 
           {/* Inclusions & Exclusions */}
           {(inclusions.length > 0 || exclusions.length > 0) && (
@@ -325,40 +373,163 @@ export default async function PublicTrekDetailPage({ params }: PageProps) {
             </div>
           )}
 
-          {/* Public Announcements */}
+          {/* Public Announcements updates feed */}
           {announcements && announcements.length > 0 && (
             <div className="space-y-4">
               <h3 className="font-bold text-lg font-[family-name:var(--font-sora-family)] text-text-primary">
                 Important Updates
               </h3>
-              <div className="space-y-3">
-                {announcements.map((ann: any) => (
-                  <div
-                    key={ann.id}
-                    className={`bg-card border rounded-xl p-5 space-y-2 ${
-                      ann.priority === "Urgent" ? "border-danger/30 bg-danger/5" : "border-border"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between text-xs text-text-muted">
-                      <span className="flex items-center gap-1">
-                        {ann.priority === "Urgent" && (
-                          <AlertTriangle className="w-3.5 h-3.5 text-danger" />
-                        )}
-                        {ann.priority} Update
-                      </span>
-                      <span>{formatDate(ann.created_at)}</span>
+              <div className="space-y-4 relative pl-5">
+                {/* Timeline connector line */}
+                <div 
+                  className="absolute left-1.5 top-2 bottom-2 w-0.5" 
+                  style={{ backgroundColor: `${accentColor}20` }}
+                />
+                
+                {announcements.map((ann: any, idx: number) => {
+                  const created = new Date(ann.created_at);
+                  const now = new Date();
+                  const diffHours = Math.abs(now.getTime() - created.getTime()) / (3600 * 1000);
+                  const isNew = diffHours < 48;
+
+                  return (
+                    <div key={ann.id} className="relative space-y-2">
+                      {/* Timeline dot */}
+                      <div 
+                        className="absolute -left-[23px] top-1.5 w-2 h-2 rounded-full border border-charcoal"
+                        style={{ backgroundColor: accentColor }}
+                      />
+                      
+                      <div className="bg-card border border-border rounded-2xl p-5 space-y-2">
+                        <div className="flex items-center justify-between text-xs text-text-muted">
+                          <span className="flex items-center gap-1.5">
+                            {isNew && (
+                              <span className="bg-accent/15 text-accent border border-accent/25 px-2 py-0.5 rounded-full text-[9px] font-bold">
+                                NEW
+                              </span>
+                            )}
+                            Broadcast
+                          </span>
+                          <span>{getRelativeTimeString(ann.created_at)}</span>
+                        </div>
+                        <p className="text-xs md:text-sm text-text-primary leading-relaxed whitespace-pre-wrap font-medium">
+                          {ann.message}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-xs md:text-sm text-text-primary leading-relaxed whitespace-pre-wrap">
-                      {ann.message}
-                    </p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
+
+          {/* Safety & Emergency Info Section (public-safe) */}
+          {hasSafetyInfo && (
+            <div className="bg-card border border-border rounded-2xl p-6 md:p-8 space-y-5">
+              <div className="flex items-center gap-3 pb-3 border-b border-border/40">
+                <div className="p-2 rounded-lg bg-alpine-green/10 text-alpine-green">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base font-[family-name:var(--font-sora-family)] text-text-primary">
+                    Safety & Emergency
+                  </h3>
+                  <p className="text-xs text-text-muted">
+                    Proactive preparations and contacts for this trek
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Emergency contact */}
+                {trek.emergency_contact_phone && (
+                  <div className="bg-charcoal/20 border border-border p-4 rounded-xl flex gap-3">
+                    <Phone className="w-5 h-5 text-accent shrink-0 mt-0.5" />
+                    <div>
+                      <span className="block text-[10px] text-text-dim uppercase tracking-wider font-semibold">Emergency Coordinator</span>
+                      <span className="text-sm font-semibold text-text-primary block mt-0.5">
+                        {trek.emergency_contact_name || "Coordinator"}
+                      </span>
+                      <a
+                        href={`tel:${trek.emergency_contact_phone}`}
+                        className="text-xs text-accent hover:underline inline-flex items-center gap-1 mt-1 font-semibold"
+                      >
+                        {trek.emergency_contact_phone}
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                {/* Nearest Hospital */}
+                {trek.nearest_hospital && (
+                  <div className="bg-charcoal/20 border border-border p-4 rounded-xl flex gap-3">
+                    <ShieldCheck className="w-5 h-5 text-danger shrink-0 mt-0.5" />
+                    <div>
+                      <span className="block text-[10px] text-text-dim uppercase tracking-wider font-semibold">Nearest Hospital</span>
+                      <span className="text-sm font-semibold text-text-primary block mt-0.5 leading-snug">
+                        {trek.nearest_hospital}
+                      </span>
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(trek.nearest_hospital)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-accent hover:underline inline-flex items-center gap-1 mt-1 font-semibold"
+                      >
+                        Open in Maps
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                {/* Network index */}
+                {trek.network_availability && (
+                  <div className="bg-charcoal/20 border border-border p-4 rounded-xl flex gap-3">
+                    <Signal className="w-5 h-5 text-alpine-green shrink-0 mt-0.5" />
+                    <div>
+                      <span className="block text-[10px] text-text-dim uppercase tracking-wider font-semibold">Network Coverage</span>
+                      <p className="text-xs text-text-secondary mt-1 leading-relaxed font-medium">
+                        {trek.network_availability}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Fitness requirement */}
+                {trek.fitness_requirement && (
+                  <div className="bg-charcoal/20 border border-border p-4 rounded-xl flex gap-3">
+                    <Activity className="w-5 h-5 text-accent shrink-0 mt-0.5" />
+                    <div>
+                      <span className="block text-[10px] text-text-dim uppercase tracking-wider font-semibold">Fitness Requirement</span>
+                      <p className="text-xs text-text-secondary mt-1 leading-relaxed font-medium">
+                        {trek.fitness_requirement}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Safety notes block */}
+              {trek.safety_notes && (
+                <div className="bg-charcoal/20 border border-border p-4 rounded-xl flex gap-3">
+                  <Info className="w-5 h-5 text-text-muted shrink-0 mt-0.5" />
+                  <div>
+                    <span className="block text-[10px] text-text-dim uppercase tracking-wider font-semibold">Safety Directives</span>
+                    <p className="text-xs text-text-secondary mt-1.5 leading-relaxed font-medium whitespace-pre-wrap">
+                      {trek.safety_notes}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Trust Strip (Mobile only - renders in content flow) */}
+          <div className="block lg:hidden mt-6">
+            {renderTrustStrip()}
+          </div>
         </div>
 
-        {/* Right Column: Sticky Booking Card */}
+        {/* Right Column: Sticky Booking Card & Trust Strip (Desktop) */}
         <div className="lg:col-span-4 space-y-6">
           <div className="bg-card border border-border rounded-2xl p-6 space-y-5 sticky top-24">
             <div>
@@ -397,7 +568,7 @@ export default async function PublicTrekDetailPage({ params }: PageProps) {
                 href={bookingLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full py-3.5 bg-accent hover:bg-accent-hover text-white text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-accent/20 cursor-pointer"
+                className="w-full py-3.5 bg-accent hover:bg-accent-hover text-white text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-accent/20 cursor-pointer text-center"
               >
                 <MessageSquare className="w-4 h-4 fill-white" />
                 Book via WhatsApp
@@ -407,7 +578,7 @@ export default async function PublicTrekDetailPage({ params }: PageProps) {
                 href={bookingLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full py-3.5 bg-card border border-border text-text-muted hover:text-text-primary text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3.5 bg-card border border-border text-text-muted hover:text-text-primary text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer text-center"
               >
                 <MessageSquare className="w-4 h-4" />
                 Join Waitlist via WA
@@ -417,6 +588,11 @@ export default async function PublicTrekDetailPage({ params }: PageProps) {
             <p className="text-[10px] text-text-dim text-center leading-relaxed">
               Booking redirects to the Captain&apos;s WhatsApp. You can coordinate payments and logistics directly.
             </p>
+          </div>
+
+          {/* Trust Strip (Desktop only - renders in right sidebar) */}
+          <div className="hidden lg:block">
+            {renderTrustStrip()}
           </div>
         </div>
       </div>

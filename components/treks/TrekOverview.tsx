@@ -14,6 +14,7 @@ import {
   Check,
   Share2,
   AlertTriangle,
+  ShieldCheck,
 } from "lucide-react";
 import { DifficultyBadge, StatusBadge } from "@/components/ui/Badge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
@@ -41,6 +42,35 @@ export default function TrekOverview({
   const [copied, setCopied] = useState(false);
   const [captainSlug, setCaptainSlug] = useState<string | null>(null);
 
+  const [safetyExpanded, setSafetyExpanded] = useState(false);
+  const [safetyForm, setSafetyForm] = useState({
+    emergencyContactName: trek.emergencyContactName || "",
+    emergencyContactPhone: trek.emergencyContactPhone || "",
+    nearestHospital: trek.nearestHospital || "",
+    networkAvailability: trek.networkAvailability || "",
+    safetyNotes: trek.safetyNotes || "",
+    fitnessRequirement: trek.fitnessRequirement || "",
+  });
+  const [savingSafety, setSavingSafety] = useState(false);
+
+  const handleSaveSafety = async () => {
+    setSavingSafety(true);
+    try {
+      const result = await updateTrek(trek.id, safetyForm);
+      if (result) {
+        toast("Safety details updated successfully!");
+        onUpdate();
+      } else {
+        toast("Failed to update safety details");
+      }
+    } catch (err) {
+      console.error(err);
+      toast("Error updating safety details");
+    } finally {
+      setSavingSafety(false);
+    }
+  };
+
   const activeParticipants = participants.filter((p) => p.status !== "Cancelled");
   const totalCollected = payments.reduce((sum, p) => sum + p.amount, 0);
   const totalExpected = activeParticipants.length * trek.pricePerPerson;
@@ -51,6 +81,17 @@ export default function TrekOverview({
       if (c) setCaptainSlug(c.slug);
     });
   }, []);
+
+  React.useEffect(() => {
+    setSafetyForm({
+      emergencyContactName: trek.emergencyContactName || "",
+      emergencyContactPhone: trek.emergencyContactPhone || "",
+      nearestHospital: trek.nearestHospital || "",
+      networkAvailability: trek.networkAvailability || "",
+      safetyNotes: trek.safetyNotes || "",
+      fitnessRequirement: trek.fitnessRequirement || "",
+    });
+  }, [trek]);
 
   const publicUrl = captainSlug
     ? `${typeof window !== "undefined" ? window.location.origin : ""}/c/${captainSlug}/${trek.slug}`
@@ -335,6 +376,125 @@ export default function TrekOverview({
           )}
         </div>
       )}
+
+      {/* Safety Info Editor */}
+      <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+        <button
+          onClick={() => setSafetyExpanded(!safetyExpanded)}
+          className="w-full flex items-center justify-between p-5 hover:bg-border/20 transition-colors text-left"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-accent/15 text-accent">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-text-primary font-[family-name:var(--font-sora-family)]">
+                Safety & Emergency Info
+              </h3>
+              <p className="text-xs text-text-muted">
+                Configure safety details visible to public visitors
+              </p>
+            </div>
+          </div>
+          <span className="text-xs text-accent font-semibold">
+            {safetyExpanded ? "Collapse" : "Expand"}
+          </span>
+        </button>
+
+        {safetyExpanded && (
+          <div className="p-5 border-t border-border space-y-4 bg-charcoal/30">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-text-muted mb-1.5">
+                  Emergency Contact Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Vikram (Base Coordinator)"
+                  value={safetyForm.emergencyContactName}
+                  onChange={(e) => setSafetyForm({ ...safetyForm, emergencyContactName: e.target.value })}
+                  className="w-full bg-charcoal border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-dim focus:border-accent focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-text-muted mb-1.5">
+                  Emergency Contact Phone
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. 9876543210"
+                  value={safetyForm.emergencyContactPhone}
+                  onChange={(e) => setSafetyForm({ ...safetyForm, emergencyContactPhone: e.target.value })}
+                  className="w-full bg-charcoal border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-dim focus:border-accent focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-text-muted mb-1.5">
+                  Nearest Hospital
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Sahyadri Hospital, Base Village (12km)"
+                  value={safetyForm.nearestHospital}
+                  onChange={(e) => setSafetyForm({ ...safetyForm, nearestHospital: e.target.value })}
+                  className="w-full bg-charcoal border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-dim focus:border-accent focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-text-muted mb-1.5">
+                  Network Availability
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Jio/Airtel till base village, no signal above"
+                  value={safetyForm.networkAvailability}
+                  onChange={(e) => setSafetyForm({ ...safetyForm, networkAvailability: e.target.value })}
+                  className="w-full bg-charcoal border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-dim focus:border-accent focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-text-muted mb-1.5">
+                Fitness Requirement
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Should be able to walk 6km continuously with 5kg backpack"
+                value={safetyForm.fitnessRequirement}
+                onChange={(e) => setSafetyForm({ ...safetyForm, fitnessRequirement: e.target.value })}
+                className="w-full bg-charcoal border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-dim focus:border-accent focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-text-muted mb-1.5">
+                Safety Notes
+              </label>
+              <textarea
+                placeholder="e.g. Carry personal medications. First-aid kit and oxygen cylinder are available with leads."
+                value={safetyForm.safetyNotes}
+                onChange={(e) => setSafetyForm({ ...safetyForm, safetyNotes: e.target.value })}
+                className="w-full bg-charcoal border border-border rounded-lg p-3 text-sm text-text-primary placeholder:text-text-dim focus:border-accent focus:outline-none"
+                rows={4}
+              />
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <Button
+                size="sm"
+                onClick={handleSaveSafety}
+                disabled={savingSafety}
+              >
+                {savingSafety ? "Saving..." : "Save Safety Info"}
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

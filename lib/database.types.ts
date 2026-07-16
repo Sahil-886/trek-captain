@@ -101,6 +101,12 @@ export interface Database {
           highlights: string | null;
           notes: string | null;
           is_published: boolean | null;
+          emergency_contact_name: string | null;
+          emergency_contact_phone: string | null;
+          nearest_hospital: string | null;
+          network_availability: string | null;
+          safety_notes: string | null;
+          fitness_requirement: string | null;
           created_at: string | null;
         };
         Insert: {
@@ -128,6 +134,12 @@ export interface Database {
           highlights?: string | null;
           notes?: string | null;
           is_published?: boolean | null;
+          emergency_contact_name?: string | null;
+          emergency_contact_phone?: string | null;
+          nearest_hospital?: string | null;
+          network_availability?: string | null;
+          safety_notes?: string | null;
+          fitness_requirement?: string | null;
           created_at?: string | null;
         };
         Update: {
@@ -155,6 +167,12 @@ export interface Database {
           highlights?: string | null;
           notes?: string | null;
           is_published?: boolean | null;
+          emergency_contact_name?: string | null;
+          emergency_contact_phone?: string | null;
+          nearest_hospital?: string | null;
+          network_availability?: string | null;
+          safety_notes?: string | null;
+          fitness_requirement?: string | null;
           created_at?: string | null;
         };
       };

@@ -62,6 +62,12 @@ export interface Trek {
   highlights: string;
   notes: string;
   isPublished: boolean;
+  emergencyContactName?: string | null;
+  emergencyContactPhone?: string | null;
+  nearestHospital?: string | null;
+  networkAvailability?: string | null;
+  safetyNotes?: string | null;
+  fitnessRequirement?: string | null;
   createdAt: string;
 }
 
