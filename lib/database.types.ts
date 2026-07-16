@@ -30,6 +30,8 @@ export interface Database {
           city: string | null;
           is_public: boolean | null;
           has_shared: boolean | null;
+          notice: string | null;
+          notice_updated_at: string | null;
           created_at: string | null;
         };
         Insert: {
@@ -48,6 +50,8 @@ export interface Database {
           city?: string | null;
           is_public?: boolean | null;
           has_shared?: boolean | null;
+          notice?: string | null;
+          notice_updated_at?: string | null;
           created_at?: string | null;
         };
         Update: {
@@ -66,6 +70,8 @@ export interface Database {
           city?: string | null;
           is_public?: boolean | null;
           has_shared?: boolean | null;
+          notice?: string | null;
+          notice_updated_at?: string | null;
           created_at?: string | null;
         };
       };

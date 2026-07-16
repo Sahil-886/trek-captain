@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Save, Globe, Copy, ExternalLink, Check, Upload } from "lucide-react";
+import { Save, Globe, Copy, ExternalLink, Check, Upload, Megaphone } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { useToast } from "@/components/ui/Toast";
-import { getCaptain, updateCaptain, uploadImage } from "@/lib/store";
+import { getCaptain, updateCaptain, uploadImage, updateCaptainNotice } from "@/lib/store";
 import type { Captain } from "@/lib/types";
 
 const ACCENT_SWATCHES = [
@@ -22,6 +22,8 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [noticeText, setNoticeText] = useState("");
+  const [noticeSaving, setNoticeSaving] = useState(false);
 
   const [form, setForm] = useState({
     fullName: "",
@@ -62,6 +64,7 @@ export default function SettingsPage() {
         });
         setAvatarPreview(c.avatarUrl);
         setCoverPreview(c.coverUrl);
+        setNoticeText(c.notice || "");
       }
       setLoading(false);
     }
@@ -137,6 +140,33 @@ export default function SettingsPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleSaveNotice = async () => {
+    setNoticeSaving(true);
+    try {
+      await updateCaptainNotice(noticeText);
+      toast("Notice updated successfully!");
+    } catch (e) {
+      console.error(e);
+      toast("Failed to save notice");
+    } finally {
+      setNoticeSaving(false);
+    }
+  };
+
+  const handleClearNotice = async () => {
+    setNoticeSaving(true);
+    try {
+      await updateCaptainNotice("");
+      setNoticeText("");
+      toast("Notice cleared successfully!");
+    } catch (e) {
+      console.error(e);
+      toast("Failed to clear notice");
+    } finally {
+      setNoticeSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-3xl">
       <Breadcrumb
@@ -174,6 +204,82 @@ export default function SettingsPage() {
           <Button size="sm" variant="ghost" onClick={() => window.open(publicUrl, "_blank")}>
             <ExternalLink className="w-3.5 h-3.5" />
           </Button>
+        </div>
+      </Card>
+
+      {/* Notice Board Editor */}
+      <Card>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 rounded-lg bg-amber-500/15 text-amber-500">
+            <Megaphone className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="font-semibold font-[family-name:var(--font-sora-family)] text-sm">
+              Notice Board Banner
+            </h3>
+            <p className="text-xs text-text-muted">
+              Display a public alert banner at the top of your page
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <textarea
+              maxLength={200}
+              placeholder="e.g. Kalsubai trek on Sunday is FULL!"
+              value={noticeText}
+              onChange={(e) => setNoticeText(e.target.value)}
+              className="w-full bg-charcoal border border-border rounded-lg p-3 text-sm text-text-primary placeholder:text-text-dim focus:border-trail-orange focus:outline-none"
+              rows={3}
+            />
+            <div className="flex justify-between text-xs text-text-muted mt-1">
+              <span>Supports up to 200 characters</span>
+              <span className={noticeText.length >= 180 ? "text-danger" : ""}>
+                {noticeText.length}/200
+              </span>
+            </div>
+          </div>
+
+          {/* Notice Preview */}
+          {noticeText.trim() && (
+            <div className="p-4 bg-amber-500/10 border border-amber-500/25 rounded-xl space-y-2">
+              <span className="text-[10px] uppercase font-bold text-amber-500 tracking-wider">
+                Live Preview
+              </span>
+              <div className="flex items-start gap-2.5">
+                <Megaphone className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-amber-100 whitespace-pre-wrap">
+                    {noticeText}
+                  </p>
+                  <span className="text-[10px] text-amber-500/80 block mt-1">
+                    Updated just now
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex gap-2 justify-end">
+            {captain?.notice && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClearNotice}
+                disabled={noticeSaving}
+              >
+                Clear Notice
+              </Button>
+            )}
+            <Button
+              size="sm"
+              onClick={handleSaveNotice}
+              disabled={noticeSaving || !noticeText.trim()}
+            >
+              {noticeSaving ? "Saving..." : "Save Notice"}
+            </Button>
+          </div>
         </div>
       </Card>
 

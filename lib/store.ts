@@ -68,6 +68,8 @@ function mapCaptain(r: DbCaptain): Captain {
     city: r.city || "",
     isPublic: r.is_public ?? true,
     hasShared: r.has_shared ?? false,
+    notice: r.notice,
+    noticeUpdatedAt: r.notice_updated_at,
     createdAt: r.created_at || "",
     // Legacy compat
     name: r.full_name,
@@ -976,5 +978,18 @@ export async function getGlobalExpenses(): Promise<Expense[]> {
 
   if (error || !data) return [];
   return data.map(mapExpense);
+}
+
+export async function updateCaptainNotice(notice: string | null): Promise<void> {
+  const userId = await getCurrentUserId();
+  const noticeUpdatedAt = notice ? new Date().toISOString() : null;
+
+  await supabase()
+    .from("captains")
+    .update({
+      notice: notice || null,
+      notice_updated_at: noticeUpdatedAt,
+    })
+    .eq("id", userId);
 }
 

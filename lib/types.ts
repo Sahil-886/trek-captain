@@ -18,6 +18,8 @@ export interface Captain {
   city: string;
   isPublic: boolean;
   hasShared: boolean;
+  notice: string | null;
+  noticeUpdatedAt: string | null;
   createdAt: string;
   // Legacy compat — computed from fullName
   name: string;
