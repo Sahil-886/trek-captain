@@ -2,21 +2,27 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Mountain,
   Settings,
   Menu,
   X,
+  LogOut,
+  Users,
+  Wallet,
 } from "lucide-react";
 import { ToastProvider } from "@/components/ui/Toast";
-import { initializeStore, getCaptain } from "@/lib/store";
+import { getCaptain, hasLocalData, clearLocalData } from "@/lib/store";
+import { createClient } from "@/lib/supabase/client";
 import type { Captain } from "@/lib/types";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/treks", label: "Treks", icon: Mountain },
+  { href: "/dashboard/participants", label: "Participants", icon: Users },
+  { href: "/dashboard/money", label: "Money", icon: Wallet },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
@@ -26,18 +32,60 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [captain, setCaptain] = useState<Captain | null>(null);
+  const [showMigrationBanner, setShowMigrationBanner] = useState(false);
+  const [loadingCaptain, setLoadingCaptain] = useState(true);
 
   useEffect(() => {
-    initializeStore();
-    setCaptain(getCaptain());
-  }, [pathname]);
+    async function load() {
+      try {
+        const c = await getCaptain();
+        if (!c) {
+          // No captain profile — redirect to onboarding
+          router.push("/onboarding");
+          return;
+        }
+        setCaptain(c);
+      } catch {
+        // Not authenticated — proxy should handle this, but safety net
+        router.push("/login");
+      }
+      setLoadingCaptain(false);
+    }
+    load();
+
+    // Check for legacy localStorage data
+    if (hasLocalData()) {
+      setShowMigrationBanner(true);
+    }
+  }, [pathname, router]);
+
+  const handleSignOut = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  };
+
+  const dismissMigration = () => {
+    clearLocalData();
+    setShowMigrationBanner(false);
+  };
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
     return pathname.startsWith(href);
   };
+
+  if (loadingCaptain) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-charcoal">
+        <div className="w-8 h-8 border-2 border-trail-orange/30 border-t-trail-orange rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <ToastProvider>
@@ -72,17 +120,27 @@ export default function DashboardLayout({
               );
             })}
           </nav>
-          {captain && (
-            <div className="p-4 border-t border-border flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-trail-orange flex items-center justify-center text-white text-xs font-bold shadow-inner">
-                {captain.avatarInitials || "CP"}
+          {/* User section + Sign out */}
+          <div className="border-t border-border">
+            {captain && (
+              <div className="p-4 flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-trail-orange flex items-center justify-center text-white text-xs font-bold shadow-inner">
+                  {captain.avatarInitials || "CP"}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-text-primary truncate">{captain.name}</p>
+                  <p className="text-[10px] text-text-muted truncate">{captain.orgName}</p>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-text-primary truncate">{captain.name}</p>
-                <p className="text-[10px] text-text-muted truncate">{captain.orgName}</p>
-              </div>
-            </div>
-          )}
+            )}
+            <button
+              onClick={handleSignOut}
+              className="w-full flex items-center gap-3 px-7 py-3 text-sm text-text-muted hover:text-danger hover:bg-danger/5 transition-colors cursor-pointer"
+            >
+              <LogOut className="w-4 h-4" />
+              Sign Out
+            </button>
+          </div>
         </aside>
 
         {/* Mobile Sidebar Overlay */}
@@ -130,17 +188,26 @@ export default function DashboardLayout({
                   );
                 })}
               </nav>
-              {captain && (
-                <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border flex items-center gap-3 bg-card">
-                  <div className="w-9 h-9 rounded-full bg-trail-orange flex items-center justify-center text-white text-xs font-bold shadow-inner">
-                    {captain.avatarInitials || "CP"}
+              <div className="absolute bottom-0 left-0 right-0 border-t border-border bg-card">
+                {captain && (
+                  <div className="p-4 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-trail-orange flex items-center justify-center text-white text-xs font-bold shadow-inner">
+                      {captain.avatarInitials || "CP"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-text-primary truncate">{captain.name}</p>
+                      <p className="text-[10px] text-text-muted truncate">{captain.orgName}</p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-text-primary truncate">{captain.name}</p>
-                    <p className="text-[10px] text-text-muted truncate">{captain.orgName}</p>
-                  </div>
-                </div>
-              )}
+                )}
+                <button
+                  onClick={handleSignOut}
+                  className="w-full flex items-center gap-3 px-7 py-3 text-sm text-text-muted hover:text-danger transition-colors cursor-pointer"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
+                </button>
+              </div>
             </aside>
           </div>
         )}
@@ -164,6 +231,21 @@ export default function DashboardLayout({
             </div>
             <div className="w-8" /> {/* Spacer */}
           </div>
+
+          {/* Migration Banner */}
+          {showMigrationBanner && (
+            <div className="m-4 md:m-8 mb-0 px-4 py-3 bg-trail-orange/10 border border-trail-orange/20 rounded-xl flex items-center justify-between gap-3">
+              <p className="text-sm text-trail-orange">
+                <span className="font-semibold">Found local demo data.</span> This data won&apos;t carry over to Supabase.
+              </p>
+              <button
+                onClick={dismissMigration}
+                className="text-xs text-trail-orange hover:text-trail-orange-hover font-medium whitespace-nowrap cursor-pointer"
+              >
+                Dismiss & Clear
+              </button>
+            </div>
+          )}
 
           <div className="p-4 md:p-8">{children}</div>
         </main>

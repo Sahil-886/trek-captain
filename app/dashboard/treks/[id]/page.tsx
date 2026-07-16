@@ -14,8 +14,8 @@ import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { Tabs } from "@/components/ui/Tabs";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
-import { getTrekById, deleteTrek, getParticipants, getPayments, getItinerary, getAnnouncements } from "@/lib/store";
-import type { Trek } from "@/lib/types";
+import { getTrekById, deleteTrek, getParticipants, getPayments, getAnnouncements } from "@/lib/store";
+import type { Trek, Participant, Payment, Announcement } from "@/lib/types";
 import TrekOverview from "@/components/treks/TrekOverview";
 import ParticipantsTab from "@/components/treks/ParticipantsTab";
 import PaymentsTab from "@/components/treks/PaymentsTab";
@@ -27,15 +27,52 @@ export default function TrekDetailPage({ params }: { params: Promise<{ id: strin
   const router = useRouter();
   const { toast } = useToast();
   const [trek, setTrek] = useState<Trek | null>(null);
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [activeTab, setActiveTab] = useState("overview");
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  const loadData = async () => {
+    try {
+      const t = await getTrekById(id);
+      if (!t) {
+        setLoading(false);
+        return;
+      }
+      setTrek(t);
+
+      const [p, pay, ann] = await Promise.all([
+        getParticipants(id),
+        getPayments(id),
+        getAnnouncements(id),
+      ]);
+      setParticipants(p);
+      setPayments(pay);
+      setAnnouncements(ann);
+    } catch (err) {
+      console.error("Failed to load trek:", err);
+      toast("Failed to load trek data", "error");
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
-    const t = getTrekById(id);
-    if (t) setTrek(t);
-  }, [id, refreshKey]);
+    loadData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
-  const refresh = () => setRefreshKey((k) => k + 1);
+  const refresh = () => {
+    loadData();
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="w-8 h-8 border-2 border-trail-orange/30 border-t-trail-orange rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (!trek) {
     return (
@@ -45,24 +82,21 @@ export default function TrekDetailPage({ params }: { params: Promise<{ id: strin
     );
   }
 
-  const participants = getParticipants(trek.id);
-  const payments = getPayments(trek.id);
-  const itinerary = getItinerary(trek.id);
-  const announcements = getAnnouncements(trek.id);
-
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (confirm("Are you sure you want to delete this trek? This action cannot be undone.")) {
-      deleteTrek(trek.id);
+      await deleteTrek(trek.id);
       toast("Trek deleted", "error");
       router.push("/dashboard/treks");
     }
   };
 
+  const activeParticipants = participants.filter((p) => p.status !== "Cancelled");
+
   const tabs = [
     { id: "overview", label: "Overview", icon: <Info className="w-4 h-4" /> },
-    { id: "participants", label: "Participants", icon: <Users className="w-4 h-4" />, count: participants.filter((p) => p.status !== "Cancelled").length },
+    { id: "participants", label: "Participants", icon: <Users className="w-4 h-4" />, count: activeParticipants.length },
     { id: "payments", label: "Payments", icon: <CreditCard className="w-4 h-4" />, count: payments.length },
-    { id: "itinerary", label: "Itinerary", icon: <Map className="w-4 h-4" />, count: itinerary.length },
+    { id: "itinerary", label: "Itinerary", icon: <Map className="w-4 h-4" />, count: trek.itinerary.length },
     { id: "announcements", label: "Announcements", icon: <Megaphone className="w-4 h-4" />, count: announcements.length },
   ];
 
@@ -96,11 +130,11 @@ export default function TrekDetailPage({ params }: { params: Promise<{ id: strin
 
       {/* Tab Content */}
       <div className="animate-fade-in">
-        {activeTab === "overview" && <TrekOverview trek={trek} onUpdate={refresh} />}
-        {activeTab === "participants" && <ParticipantsTab trek={trek} onUpdate={refresh} />}
-        {activeTab === "payments" && <PaymentsTab trek={trek} onUpdate={refresh} />}
+        {activeTab === "overview" && <TrekOverview trek={trek} participants={participants} payments={payments} onUpdate={refresh} />}
+        {activeTab === "participants" && <ParticipantsTab trek={trek} participants={participants} payments={payments} onUpdate={refresh} />}
+        {activeTab === "payments" && <PaymentsTab trek={trek} participants={participants} payments={payments} onUpdate={refresh} />}
         {activeTab === "itinerary" && <ItineraryTab trek={trek} onUpdate={refresh} />}
-        {activeTab === "announcements" && <AnnouncementsTab trek={trek} onUpdate={refresh} />}
+        {activeTab === "announcements" && <AnnouncementsTab trek={trek} announcements={announcements} onUpdate={refresh} />}
       </div>
     </div>
   );

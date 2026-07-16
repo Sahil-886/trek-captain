@@ -14,6 +14,8 @@
   --color-text-primary: #F0F3F6;
   --color-text-muted: #8B949E;
   --color-text-dim: #484F58;
+  --color-accent: var(--accent, #FF6B2C);
+  --color-accent-hover: var(--accent-hover, #FF8A55);
   --font-sora: var(--font-sora-family);
   --font-inter: var(--font-inter-family);
 }

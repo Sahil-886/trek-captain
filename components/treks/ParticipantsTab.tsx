@@ -11,6 +11,7 @@ import {
   ArrowUpDown,
   ShieldAlert,
   Heart,
+  Printer,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -19,20 +20,22 @@ import { StatusBadge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useToast } from "@/components/ui/Toast";
 import {
-  getParticipants,
   addParticipant,
   updateParticipant,
   removeParticipant,
-  getPayments,
 } from "@/lib/store";
 import { formatDate, getTelLink, getWhatsAppLink, exportCSV } from "@/lib/utils";
-import type { Trek, Participant, ParticipantStatus } from "@/lib/types";
+import type { Trek, Participant, ParticipantStatus, Payment } from "@/lib/types";
 
 export default function ParticipantsTab({
   trek,
+  participants,
+  payments,
   onUpdate,
 }: {
   trek: Trek;
+  participants: Participant[];
+  payments: Payment[];
   onUpdate: () => void;
 }) {
   const { toast } = useToast();
@@ -42,9 +45,6 @@ export default function ParticipantsTab({
   const [showAdd, setShowAdd] = useState(false);
   const [showEmergency, setShowEmergency] = useState(false);
   const [filterTab, setFilterTab] = useState<"all" | "confirmed" | "waitlist" | "paid" | "pending">("all");
-
-  const participants = getParticipants(trek.id);
-  const payments = getPayments(trek.id);
 
   const getPaymentStatus = (participantId: string) => {
     const pPayments = payments.filter((p) => p.participantId === participantId);
@@ -86,22 +86,42 @@ export default function ParticipantsTab({
     }
   };
 
-  const handleAdd = (data: Omit<Participant, "id" | "joinedAt">) => {
-    addParticipant(data);
-    onUpdate();
-    setShowAdd(false);
-    toast("Participant added!");
+  const handleAdd = async (data: {
+    trekId: string;
+    name: string;
+    phone: string;
+    email: string;
+    emergencyContact: string;
+    bloodGroup: string;
+    status: ParticipantStatus;
+  }) => {
+    const res = await addParticipant({
+      ...data,
+      medicalNotes: "",
+      age: null,
+      gender: "",
+      bloodGroup: data.bloodGroup || "",
+      emergencyContact: data.emergencyContact || "",
+      emergencyContactPhone: "",
+    });
+    if (res) {
+      onUpdate();
+      setShowAdd(false);
+      toast("Participant added!");
+    } else {
+      toast("Failed to add participant", "error");
+    }
   };
 
-  const handleStatusChange = (id: string, status: ParticipantStatus) => {
-    updateParticipant(id, { status });
+  const handleStatusChange = async (id: string, status: ParticipantStatus) => {
+    await updateParticipant(id, { status });
     onUpdate();
     toast(`Participant moved to ${status}`);
   };
 
-  const handleRemove = (id: string, name: string) => {
+  const handleRemove = async (id: string, name: string) => {
     if (confirm(`Remove ${name}? Their payment records will also be deleted.`)) {
-      removeParticipant(id);
+      await removeParticipant(id);
       onUpdate();
       toast("Participant removed", "error");
     }
@@ -132,7 +152,7 @@ export default function ParticipantsTab({
             />
           </div>
           <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-            <Button
+             <Button
               variant="outline"
               size="sm"
               icon={<ShieldAlert className="w-4 h-4 text-trail-orange" />}
@@ -140,6 +160,15 @@ export default function ParticipantsTab({
               className="flex-1 sm:flex-none"
             >
               Emergency Info
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<Printer className="w-4 h-4 text-trail-orange" />}
+              onClick={() => window.open(`/dashboard/treks/${trek.id}/emergency`, "_blank")}
+              className="flex-1 sm:flex-none"
+            >
+              Emergency Sheet
             </Button>
             <Button variant="outline" size="sm" icon={<Download className="w-4 h-4" />} onClick={handleExportCSV} className="flex-1 sm:flex-none">
               Export CSV
@@ -346,7 +375,6 @@ export default function ParticipantsTab({
         </>
       )}
 
-
       {/* Add Modal */}
       <AddParticipantModal
         isOpen={showAdd}
@@ -445,7 +473,15 @@ function AddParticipantModal({
   isOpen: boolean;
   onClose: () => void;
   trekId: string;
-  onAdd: (data: Omit<Participant, "id" | "joinedAt">) => void;
+  onAdd: (data: {
+    trekId: string;
+    name: string;
+    phone: string;
+    email: string;
+    emergencyContact: string;
+    bloodGroup: string;
+    status: ParticipantStatus;
+  }) => void;
 }) {
   const [form, setForm] = useState({
     name: "",

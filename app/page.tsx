@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   Users,
   CreditCard,
@@ -6,11 +7,21 @@ import {
   ArrowRight,
   Mountain,
   Shield,
-  CheckCircle2,
   Calendar,
 } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // If already logged in, redirect to dashboard
+  if (user) {
+    redirect("/dashboard");
+  }
+
   return (
     <div className="min-h-screen bg-charcoal topo-bg relative overflow-hidden flex flex-col justify-between">
       {/* Decorative Glows */}
@@ -29,10 +40,10 @@ export default function LandingPage() {
             </span>
           </div>
           <Link
-            href="/dashboard"
+            href="/login"
             className="inline-flex items-center gap-2 px-4 py-2 bg-trail-orange text-white text-sm font-semibold rounded-lg hover:bg-trail-orange-hover transition-all duration-300 shadow-md shadow-trail-orange/10 hover:shadow-trail-orange/20 cursor-pointer"
           >
-            Open Dashboard
+            Sign In
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
@@ -60,15 +71,15 @@ export default function LandingPage() {
             </p>
             <div className="flex flex-wrap items-center gap-4 pt-2">
               <Link
-                href="/dashboard"
+                href="/signup"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-trail-orange text-white text-sm font-bold rounded-xl hover:bg-trail-orange-hover transition-all duration-300 shadow-lg shadow-trail-orange/25 hover:translate-y-[-1px] cursor-pointer"
               >
-                Go to Dashboard
+                Get Started Free
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <div className="flex items-center gap-2 text-xs text-text-muted font-medium bg-card/60 border border-border/80 rounded-lg px-4 py-3">
                 <Shield className="w-4 h-4 text-alpine-green" />
-                Demo dataset pre-loaded • Ready to test
+                Supabase backend secured • RLS enabled
               </div>
             </div>
           </div>

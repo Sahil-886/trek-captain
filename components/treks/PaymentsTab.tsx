@@ -2,30 +2,33 @@
 
 import React, { useState } from "react";
 import { Plus, MessageCircle, Filter } from "lucide-react";
-import { Card, StatCard } from "@/components/ui/Card";
+import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Input, Select } from "@/components/ui/Input";
 import { StatusBadge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useToast } from "@/components/ui/Toast";
-import { getParticipants, getPayments, recordPayment } from "@/lib/store";
+import { recordPayment } from "@/lib/store";
 import { formatINR, formatDate, getWhatsAppLink } from "@/lib/utils";
-import type { Trek, PaymentMode } from "@/lib/types";
+import type { Trek, PaymentMode, Participant, Payment } from "@/lib/types";
 
 export default function PaymentsTab({
   trek,
+  participants: rawParticipants,
+  payments,
   onUpdate,
 }: {
   trek: Trek;
+  participants: Participant[];
+  payments: Payment[];
   onUpdate: () => void;
 }) {
   const { toast } = useToast();
   const [showRecord, setShowRecord] = useState(false);
   const [filterMode, setFilterMode] = useState<string>("all");
 
-  const participants = getParticipants(trek.id).filter((p) => p.status !== "Cancelled");
-  const payments = getPayments(trek.id);
+  const participants = rawParticipants.filter((p) => p.status !== "Cancelled");
 
   const collected = payments.reduce((s, p) => s + p.amount, 0);
   const expected = participants.length * trek.pricePerPerson;
@@ -59,17 +62,21 @@ export default function PaymentsTab({
     return Math.max(0, trek.pricePerPerson - totalPaid);
   };
 
-  const handleRecord = (data: { participantId: string; amount: number; mode: PaymentMode; note: string }) => {
-    recordPayment({
+  const handleRecord = async (data: { participantId: string; amount: number; mode: PaymentMode; note: string }) => {
+    const res = await recordPayment({
       participantId: data.participantId,
       trekId: trek.id,
       amount: data.amount,
       mode: data.mode,
       note: data.note,
     });
-    onUpdate();
-    setShowRecord(false);
-    toast("Payment recorded!");
+    if (res) {
+      onUpdate();
+      setShowRecord(false);
+      toast("Payment recorded!");
+    } else {
+      toast("Failed to record payment", "error");
+    }
   };
 
   const sendReminder = (participantId: string) => {
@@ -178,14 +185,16 @@ export default function PaymentsTab({
       )}
 
       {/* Record Payment Modal */}
-      <RecordPaymentModal
-        isOpen={showRecord}
-        onClose={() => setShowRecord(false)}
-        participants={participants}
-        payments={payments}
-        pricePerPerson={trek.pricePerPerson}
-        onRecord={handleRecord}
-      />
+      {showRecord && (
+        <RecordPaymentModal
+          isOpen={showRecord}
+          onClose={() => setShowRecord(false)}
+          participants={participants}
+          payments={payments}
+          pricePerPerson={trek.pricePerPerson}
+          onRecord={handleRecord}
+        />
+      )}
     </div>
   );
 }
@@ -262,8 +271,8 @@ function RecordPaymentModal({
           ]}
         />
         <Input
-          label="Note (optional)"
-          placeholder="e.g. Advance payment"
+          label="Notes"
+          placeholder="e.g. Transaction ID, half-payment"
           value={form.note}
           onChange={(e) => setForm({ ...form, note: e.target.value })}
         />

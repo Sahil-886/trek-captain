@@ -13,24 +13,39 @@ import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { useToast } from "@/components/ui/Toast";
 import { getTreks, getParticipants, getPayments, createTrek } from "@/lib/store";
 import { formatINR, formatDate } from "@/lib/utils";
-import type { Trek, Difficulty, TrekStatus } from "@/lib/types";
+import type { Trek, Participant, Payment, Difficulty, TrekStatus } from "@/lib/types";
 
 const COVER_COLORS = ["#FF6B2C", "#2DD4A7", "#818CF8", "#F59E0B", "#EC4899", "#06B6D4"];
 
 export default function TreksPage() {
   const { toast } = useToast();
   const [treks, setTreks] = useState<Trek[]>([]);
+  const [allParticipants, setAllParticipants] = useState<Participant[]>([]);
+  const [allPayments, setAllPayments] = useState<Payment[]>([]);
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const loadTreks = () => {
-    setTreks(getTreks());
+  const loadData = async () => {
+    try {
+      const [t, p, pay] = await Promise.all([
+        getTreks(),
+        getParticipants(),
+        getPayments(),
+      ]);
+      setTreks(t);
+      setAllParticipants(p);
+      setAllPayments(pay);
+    } catch (err) {
+      console.error("Failed to load treks:", err);
+      toast("Failed to load treks", "error");
+    }
     setLoading(false);
   };
 
   useEffect(() => {
-    loadTreks();
+    loadData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filtered = treks.filter(
@@ -39,11 +54,15 @@ export default function TreksPage() {
       t.location.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleCreate = (data: Omit<Trek, "id">) => {
-    createTrek(data);
-    loadTreks();
-    setShowCreate(false);
-    toast("Trek created successfully!");
+  const handleCreate = async (data: Parameters<typeof createTrek>[0]) => {
+    const result = await createTrek(data);
+    if (result) {
+      await loadData();
+      setShowCreate(false);
+      toast("Trek created successfully!");
+    } else {
+      toast("Failed to create trek", "error");
+    }
   };
 
   if (loading) return null;
@@ -82,8 +101,8 @@ export default function TreksPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {filtered.map((trek) => {
-            const participants = getParticipants(trek.id).filter((p) => p.status !== "Cancelled");
-            const payments = getPayments(trek.id);
+            const participants = allParticipants.filter((p) => p.trekId === trek.id && p.status !== "Cancelled");
+            const payments = allPayments.filter((p) => p.trekId === trek.id);
             const collected = payments.reduce((s, p) => s + p.amount, 0);
             const expected = participants.length * trek.pricePerPerson;
 
@@ -124,6 +143,13 @@ export default function TreksPage() {
                     </span>
                     <span>{formatINR(trek.pricePerPerson)}/person</span>
                   </div>
+
+                  {trek.isPublished && (
+                    <div className="mt-2 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-alpine-green" />
+                      <span className="text-[10px] text-alpine-green font-medium">Published</span>
+                    </div>
+                  )}
                 </div>
               </Link>
             );
@@ -144,7 +170,7 @@ function CreateTrekPanel({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (data: Omit<Trek, "id">) => void;
+  onCreate: (data: Parameters<typeof createTrek>[0]) => void;
 }) {
   const [form, setForm] = useState({
     title: "",
@@ -181,8 +207,8 @@ function CreateTrekPanel({
       title: form.title,
       location: form.location,
       region: form.region,
-      startDate: new Date(form.startDate).toISOString(),
-      endDate: new Date(form.endDate).toISOString(),
+      startDate: form.startDate,
+      endDate: form.endDate,
       difficulty: form.difficulty,
       pricePerPerson: Number(form.pricePerPerson),
       maxCapacity: Number(form.maxCapacity),
