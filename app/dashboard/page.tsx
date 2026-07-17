@@ -457,22 +457,26 @@ export default function DashboardPage() {
             <StatCard
               label="Active Treks"
               value={stats.activeTreks.toString()}
-              icon={<Mountain className="w-5 h-5 text-trail-orange" />}
+              icon={<Mountain className="w-5 h-5" />}
+              iconBg="bg-emerald-500/10 text-emerald-600 ring-emerald-500/20"
             />
             <StatCard
               label="Total Participants"
               value={stats.totalParticipants.toString()}
-              icon={<Users className="w-5 h-5 text-trail-orange" />}
+              icon={<Users className="w-5 h-5" />}
+              iconBg="bg-blue-500/10 text-blue-600 ring-blue-500/20"
             />
             <StatCard
               label="Amount Collected"
               value={formatINR(stats.amountCollected)}
-              icon={<IndianRupee className="w-5 h-5 text-alpine-green" />}
+              icon={<IndianRupee className="w-5 h-5" />}
+              iconBg="bg-amber-500/10 text-amber-600 ring-amber-500/20"
             />
             <StatCard
               label="Pending Dues"
               value={formatINR(stats.pendingDues)}
-              icon={<AlertCircle className="w-5 h-5 text-danger" />}
+              icon={<AlertCircle className="w-5 h-5" />}
+              iconBg="bg-rose-500/10 text-rose-600 ring-rose-500/20"
             />
           </div>
 

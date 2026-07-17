@@ -91,11 +91,11 @@ export default function DashboardLayout({
     <ToastProvider>
       <div className="flex h-screen overflow-hidden">
         {/* Desktop Sidebar */}
-        <aside className="hidden md:flex md:flex-col md:w-64 bg-card border-r border-border flex-shrink-0">
-          <div className="p-5 border-b border-border">
+        <aside className="hidden md:flex md:flex-col md:w-64 bg-gradient-to-b from-[#0B1C10] to-[#122A1B] border-r border-[#1B3624] flex-shrink-0">
+          <div className="p-5 border-b border-[#1B3624]">
             <Link href="/dashboard" className="flex items-center gap-2.5">
               <span className="text-2xl">⛰</span>
-              <span className="font-bold text-lg font-[family-name:var(--font-sora-family)] text-text-primary">
+              <span className="font-bold text-lg font-[family-name:var(--font-sora-family)] text-[#EAF5EE]">
                 Trek Captain
               </span>
             </Link>
@@ -110,8 +110,8 @@ export default function DashboardLayout({
                   href={item.href}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                     active
-                      ? "bg-trail-orange/10 text-trail-orange"
-                      : "text-text-muted hover:text-text-primary hover:bg-border/50"
+                      ? "bg-alpine-green/20 text-[#2DD4A7] font-semibold border-l-4 border-alpine-green rounded-l-none"
+                      : "text-[#9CBCA7] hover:text-white hover:bg-[#183624]/60"
                   }`}
                 >
                   <Icon className="w-5 h-5" />
@@ -121,21 +121,21 @@ export default function DashboardLayout({
             })}
           </nav>
           {/* User section + Sign out */}
-          <div className="border-t border-border">
+          <div className="border-t border-[#1B3624]">
             {captain && (
               <div className="p-4 flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-trail-orange flex items-center justify-center text-white text-xs font-bold shadow-inner">
+                <div className="w-9 h-9 rounded-full bg-[#10B981] flex items-center justify-center text-white text-xs font-bold shadow-inner">
                   {captain.avatarInitials || "CP"}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-text-primary truncate">{captain.name}</p>
-                  <p className="text-[10px] text-text-muted truncate">{captain.orgName}</p>
+                  <p className="text-xs font-semibold text-[#EAF5EE] truncate">{captain.name}</p>
+                  <p className="text-[10px] text-[#9CBCA7] truncate">{captain.orgName}</p>
                 </div>
               </div>
             )}
             <button
               onClick={handleSignOut}
-              className="w-full flex items-center gap-3 px-7 py-3 text-sm text-text-muted hover:text-danger hover:bg-danger/5 transition-colors cursor-pointer"
+              className="w-full flex items-center gap-3 px-7 py-3 text-sm text-[#9CBCA7] hover:text-[#FFA0A0] hover:bg-[#EF4444]/10 transition-colors cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
               Sign Out
@@ -150,19 +150,19 @@ export default function DashboardLayout({
             onClick={() => setSidebarOpen(false)}
           >
             <aside
-              className="absolute left-0 top-0 h-full w-64 bg-card border-r border-border slide-in-right"
+              className="absolute left-0 top-0 h-full w-64 bg-gradient-to-b from-[#0B1C10] to-[#122A1B] border-r border-[#1B3624] slide-in-right"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-5 border-b border-border flex items-center justify-between">
+              <div className="p-5 border-b border-[#1B3624] flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <span className="text-2xl">⛰</span>
-                  <span className="font-bold text-lg font-[family-name:var(--font-sora-family)] text-text-primary">
+                  <span className="font-bold text-lg font-[family-name:var(--font-sora-family)] text-[#EAF5EE]">
                     Trek Captain
                   </span>
                 </div>
                 <button
                   onClick={() => setSidebarOpen(false)}
-                  className="p-1 text-text-muted hover:text-text-primary cursor-pointer"
+                  className="p-1 text-[#9CBCA7] hover:text-white cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -178,8 +178,8 @@ export default function DashboardLayout({
                       onClick={() => setSidebarOpen(false)}
                       className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                         active
-                          ? "bg-trail-orange/10 text-trail-orange"
-                          : "text-text-muted hover:text-text-primary hover:bg-border/50"
+                          ? "bg-alpine-green/20 text-[#2DD4A7] font-semibold border-l-4 border-alpine-green rounded-l-none"
+                          : "text-[#9CBCA7] hover:text-white hover:bg-[#183624]/60"
                       }`}
                     >
                       <Icon className="w-5 h-5" />
@@ -188,21 +188,21 @@ export default function DashboardLayout({
                   );
                 })}
               </nav>
-              <div className="absolute bottom-0 left-0 right-0 border-t border-border bg-card">
+              <div className="absolute bottom-0 left-0 right-0 border-t border-[#1B3624] bg-[#0B1C10]">
                 {captain && (
                   <div className="p-4 flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-trail-orange flex items-center justify-center text-white text-xs font-bold shadow-inner">
+                    <div className="w-9 h-9 rounded-full bg-[#10B981] flex items-center justify-center text-white text-xs font-bold shadow-inner">
                       {captain.avatarInitials || "CP"}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-text-primary truncate">{captain.name}</p>
-                      <p className="text-[10px] text-text-muted truncate">{captain.orgName}</p>
+                      <p className="text-xs font-semibold text-[#EAF5EE] truncate">{captain.name}</p>
+                      <p className="text-[10px] text-[#9CBCA7] truncate">{captain.orgName}</p>
                     </div>
                   </div>
                 )}
                 <button
                   onClick={handleSignOut}
-                  className="w-full flex items-center gap-3 px-7 py-3 text-sm text-text-muted hover:text-danger transition-colors cursor-pointer"
+                  className="w-full flex items-center gap-3 px-7 py-3 text-sm text-[#9CBCA7] hover:text-[#FFA0A0] hover:bg-[#EF4444]/10 transition-colors cursor-pointer"
                 >
                   <LogOut className="w-4 h-4" />
                   Sign Out
