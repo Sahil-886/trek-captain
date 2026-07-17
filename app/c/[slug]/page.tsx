@@ -94,18 +94,21 @@ export default async function CaptainProfilePage({ params }: PageProps) {
     notFound();
   }
 
-  // Fetch all treks for this captain
-  const { data: treks } = await supabase
-    .from("treks")
-    .select("*")
-    .eq("captain_id", captain.id)
-    .eq("is_published", true)
-    .order("start_date", { ascending: true });
+  // Fetch treks and public stats in parallel to optimize load speed
+  const [treksRes, statsRes] = await Promise.all([
+    supabase
+      .from("treks")
+      .select("*")
+      .eq("captain_id", captain.id)
+      .eq("is_published", true)
+      .order("start_date", { ascending: true }),
+    supabase
+      .from("trek_public_stats")
+      .select("*")
+  ]);
 
-  // Fetch public stats for spots calculation
-  const { data: stats } = await supabase
-    .from("trek_public_stats")
-    .select("*");
+  const treks = treksRes.data;
+  const stats = statsRes.data;
 
   const getSpotsLeft = (trekId: string, maxCapacity: number) => {
     const stat = stats?.find((s: any) => s.trek_id === trekId);

@@ -39,6 +39,7 @@ export default function OnboardingPage() {
   const [fullName, setFullName] = useState("");
   const [tagline, setTagline] = useState("");
   const [city, setCity] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
 
   // Step 2: Identity
   const [accentColor, setAccentColor] = useState("#FF6B2C");
@@ -144,6 +145,7 @@ export default function OnboardingPage() {
         coverUrl,
         accentColor,
         city: city || undefined,
+        whatsapp: whatsapp || undefined,
       });
 
       router.push("/dashboard");
@@ -155,7 +157,7 @@ export default function OnboardingPage() {
   };
 
   const canProceed = () => {
-    if (step === 1) return brandName.trim() && fullName.trim();
+    if (step === 1) return brandName.trim() && fullName.trim() && whatsapp.trim();
     if (step === 2) return true;
     if (step === 3) return slug.length >= 3 && slugAvailable === true;
     return false;
@@ -251,6 +253,19 @@ export default function OnboardingPage() {
                     placeholder="e.g. Sahil Devendramakhamale"
                     className="w-full px-4 py-3 bg-card border border-border rounded-xl text-sm text-text-primary placeholder:text-text-dim focus:border-trail-orange focus:outline-none"
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-text-muted mb-1.5">WhatsApp Phone Number *</label>
+                  <input
+                    type="text"
+                    value={whatsapp}
+                    onChange={(e) => setWhatsapp(e.target.value)}
+                    placeholder="e.g. 9876543210 (without +, spaces, or leading 0)"
+                    className="w-full px-4 py-3 bg-card border border-border rounded-xl text-sm text-text-primary placeholder:text-text-dim focus:border-trail-orange focus:outline-none"
+                  />
+                  <p className="text-[10px] text-text-dim mt-1">
+                    Required. This number is used for WhatsApp booking referrals and coordinator check-ins.
+                  </p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-text-muted mb-1.5">Tagline</label>

@@ -259,6 +259,7 @@ export async function createCaptainProfile(profile: {
   coverUrl?: string | null;
   accentColor?: string;
   city?: string;
+  whatsapp?: string;
 }): Promise<Captain | null> {
   const userId = await getCurrentUserId();
 
@@ -274,6 +275,7 @@ export async function createCaptainProfile(profile: {
       cover_url: profile.coverUrl || null,
       accent_color: profile.accentColor || "#FF6B2C",
       city: profile.city || null,
+      whatsapp: profile.whatsapp || null,
     })
     .select()
     .single();

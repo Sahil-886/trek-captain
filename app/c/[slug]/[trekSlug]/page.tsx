@@ -89,33 +89,33 @@ export default async function PublicTrekDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  // Fetch spots count
-  const { data: stats } = await supabase
-    .from("trek_public_stats")
-    .select("*")
-    .eq("trek_id", trek.id)
-    .maybeSingle();
+  // Fetch remaining details in parallel to optimize load time
+  const [statsRes, announcementsRes, completedCountRes] = await Promise.all([
+    supabase
+      .from("trek_public_stats")
+      .select("*")
+      .eq("trek_id", trek.id)
+      .maybeSingle(),
+    supabase
+      .from("announcements")
+      .select("*")
+      .eq("trek_id", trek.id)
+      .eq("is_public", true)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("treks")
+      .select("*", { count: "exact", head: true })
+      .eq("captain_id", captain.id)
+      .eq("status", "Completed")
+      .eq("is_published", true),
+  ]);
+
+  const stats = statsRes.data;
+  const announcements = announcementsRes.data;
+  const completedTreksHostedCount = completedCountRes.count || 0;
 
   const booked = stats?.booked_count || 0;
   const spotsLeft = Math.max(0, trek.max_capacity - booked);
-
-  // Fetch public announcements for this trek
-  const { data: announcements } = await supabase
-    .from("announcements")
-    .select("*")
-    .eq("trek_id", trek.id)
-    .eq("is_public", true)
-    .order("created_at", { ascending: false });
-
-  // Fetch completed treks count for trust strip
-  const { count: completedCount } = await supabase
-    .from("treks")
-    .select("*", { count: "exact", head: true })
-    .eq("captain_id", captain.id)
-    .eq("status", "Completed")
-    .eq("is_published", true);
-
-  const completedTreksHostedCount = completedCount || 0;
 
   // Prefilled WhatsApp message
   const waMessage = `Hi ${captain.full_name}! 👋\n\nI want to book spots for *${trek.title}* starting on *${formatDate(trek.start_date)}*.\n\nAre spots available?`;
