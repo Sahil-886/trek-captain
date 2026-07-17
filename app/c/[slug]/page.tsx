@@ -64,6 +64,14 @@ function normalizeWhatsApp(phone: string): string {
   return clean;
 }
 
+function normalizeInstagram(instagram: string): string {
+  const clean = instagram.trim();
+  if (clean.startsWith("http://") || clean.startsWith("https://")) {
+    return clean;
+  }
+  return `https://instagram.com/${clean.replace("@", "")}`;
+}
+
 function formatTrekDateHuman(startStr: string, endStr: string): string {
   const start = new Date(startStr);
   const end = new Date(endStr);
@@ -216,7 +224,7 @@ export default async function CaptainProfilePage({ params }: PageProps) {
           )}
           {captain.instagram && (
             <a
-              href={`https://instagram.com/${captain.instagram.replace("@", "")}`}
+              href={normalizeInstagram(captain.instagram)}
               target="_blank"
               rel="noopener noreferrer"
               className="px-5 py-3 bg-card border border-border hover:border-border-hover rounded-xl text-xs font-bold text-text-secondary hover:text-text-primary transition-all shadow-sm flex items-center gap-2 cursor-pointer"
