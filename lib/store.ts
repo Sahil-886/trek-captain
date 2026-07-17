@@ -110,6 +110,7 @@ function mapTrek(r: DbTrek): Trek {
     networkAvailability: r.network_availability,
     safetyNotes: r.safety_notes,
     fitnessRequirement: r.fitness_requirement,
+    whatsappGroupUrl: r.whatsapp_group_url,
     createdAt: r.created_at || "",
   };
 }
@@ -381,6 +382,7 @@ export async function updateTrek(
   if (updates.networkAvailability !== undefined) dbUpdates.network_availability = updates.networkAvailability;
   if (updates.safetyNotes !== undefined) dbUpdates.safety_notes = updates.safetyNotes;
   if (updates.fitnessRequirement !== undefined) dbUpdates.fitness_requirement = updates.fitnessRequirement;
+  if (updates.whatsappGroupUrl !== undefined) dbUpdates.whatsapp_group_url = updates.whatsappGroupUrl;
 
   const { data, error } = await supabase()
     .from("treks")

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { MessageSquare, Check, X, ShieldAlert, Heart, Calendar, Phone } from "lucide-react";
+import { MessageSquare, Check, X, ShieldAlert, Heart, Calendar, Phone, MessageCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 interface JoinTrekFormProps {
@@ -11,6 +11,7 @@ interface JoinTrekFormProps {
   trekTitle: string;
   accentColor: string;
   spotsLeft: number;
+  whatsappGroupUrl: string | null | undefined;
 }
 
 export default function JoinTrekForm({
@@ -20,6 +21,7 @@ export default function JoinTrekForm({
   trekTitle,
   accentColor,
   spotsLeft,
+  whatsappGroupUrl,
 }: JoinTrekFormProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [success, setSuccess] = useState<boolean | null>(null);
@@ -144,10 +146,28 @@ export default function JoinTrekForm({
                       : `Your spot has been reserved! ${brandName} team will reach out to you shortly to coordinate payments and briefing.`}
                   </p>
                 </div>
-                <div className="pt-4">
+                
+                {!isWaitlist && whatsappGroupUrl && (
+                  <div className="pt-2 max-w-sm mx-auto">
+                    <a
+                      href={whatsappGroupUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-3 bg-[#25D366] hover:bg-[#20ba5a] text-white text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md min-h-[44px]"
+                    >
+                      <MessageCircle className="w-4 h-4 fill-white text-[#25D366]" />
+                      Join Updates & Follow-up Group
+                    </a>
+                    <p className="text-[10px] text-text-dim mt-1.5 leading-relaxed">
+                      Click above to join the official WhatsApp group for important briefings, preparation guides, and updates.
+                    </p>
+                  </div>
+                )}
+
+                <div className="pt-4 border-t border-border/30">
                   <button
                     onClick={() => setIsOpen(false)}
-                    className="px-6 py-2.5 bg-accent text-white text-xs font-bold rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
+                    className="px-6 py-2.5 bg-accent text-white text-xs font-bold rounded-lg hover:opacity-90 transition-opacity cursor-pointer min-h-[36px]"
                     style={{ backgroundColor: accentColor }}
                   >
                     Close

@@ -595,6 +595,7 @@ export default async function PublicTrekDetailPage({ params }: PageProps) {
                   trekTitle={trek.title}
                   accentColor={accentColor}
                   spotsLeft={spotsLeft}
+                  whatsappGroupUrl={trek.whatsapp_group_url}
                 />
               </div>
             )}

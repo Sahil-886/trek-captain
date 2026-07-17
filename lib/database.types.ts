@@ -107,6 +107,7 @@ export interface Database {
           network_availability: string | null;
           safety_notes: string | null;
           fitness_requirement: string | null;
+          whatsapp_group_url: string | null;
           created_at: string | null;
         };
         Insert: {
@@ -140,6 +141,7 @@ export interface Database {
           network_availability?: string | null;
           safety_notes?: string | null;
           fitness_requirement?: string | null;
+          whatsapp_group_url?: string | null;
           created_at?: string | null;
         };
         Update: {
@@ -173,6 +175,7 @@ export interface Database {
           network_availability?: string | null;
           safety_notes?: string | null;
           fitness_requirement?: string | null;
+          whatsapp_group_url?: string | null;
           created_at?: string | null;
         };
       };

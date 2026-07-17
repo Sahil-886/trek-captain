@@ -68,6 +68,7 @@ export interface Trek {
   networkAvailability?: string | null;
   safetyNotes?: string | null;
   fitnessRequirement?: string | null;
+  whatsappGroupUrl?: string | null;
   createdAt: string;
 }
 

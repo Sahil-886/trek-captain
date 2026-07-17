@@ -50,6 +50,7 @@ export default function TrekOverview({
     networkAvailability: trek.networkAvailability || "",
     safetyNotes: trek.safetyNotes || "",
     fitnessRequirement: trek.fitnessRequirement || "",
+    whatsappGroupUrl: trek.whatsappGroupUrl || "",
   });
   const [savingSafety, setSavingSafety] = useState(false);
 
@@ -90,6 +91,7 @@ export default function TrekOverview({
       networkAvailability: trek.networkAvailability || "",
       safetyNotes: trek.safetyNotes || "",
       fitnessRequirement: trek.fitnessRequirement || "",
+      whatsappGroupUrl: trek.whatsappGroupUrl || "",
     });
   }, [trek]);
 
@@ -468,6 +470,22 @@ export default function TrekOverview({
                 onChange={(e) => setSafetyForm({ ...safetyForm, fitnessRequirement: e.target.value })}
                 className="w-full bg-charcoal border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-dim focus:border-accent focus:outline-none"
               />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-text-muted mb-1.5">
+                WhatsApp Group Invite Link
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. https://chat.whatsapp.com/..."
+                value={safetyForm.whatsappGroupUrl}
+                onChange={(e) => setSafetyForm({ ...safetyForm, whatsappGroupUrl: e.target.value })}
+                className="w-full bg-charcoal border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-dim focus:border-accent focus:outline-none"
+              />
+              <p className="text-[10px] text-text-dim mt-1">
+                Registered participants will be prompted to join this group immediately after registering online.
+              </p>
             </div>
 
             <div>
