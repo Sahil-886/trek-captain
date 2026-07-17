@@ -15,6 +15,8 @@ import {
   Share2,
   AlertTriangle,
   ShieldCheck,
+  Edit3,
+  X,
 } from "lucide-react";
 import { DifficultyBadge, StatusBadge } from "@/components/ui/Badge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
@@ -53,6 +55,34 @@ export default function TrekOverview({
     whatsappGroupUrl: trek.whatsappGroupUrl || "",
   });
   const [savingSafety, setSavingSafety] = useState(false);
+
+  const [editingCapacity, setEditingCapacity] = useState(false);
+  const [tempCapacity, setTempCapacity] = useState(trek.maxCapacity.toString());
+  const [savingCapacity, setSavingCapacity] = useState(false);
+
+  const handleSaveCapacityLimit = async () => {
+    const val = parseInt(tempCapacity, 10);
+    if (isNaN(val) || val <= 0) {
+      toast("Please enter a valid capacity limit", "error");
+      return;
+    }
+    setSavingCapacity(true);
+    try {
+      const result = await updateTrek(trek.id, { maxCapacity: val });
+      if (result) {
+        toast("Capacity limit updated successfully!");
+        setEditingCapacity(false);
+        onUpdate();
+      } else {
+        toast("Failed to update capacity limit", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      toast("Error updating capacity limit", "error");
+    } finally {
+      setSavingCapacity(false);
+    }
+  };
 
   const handleSaveSafety = async () => {
     setSavingSafety(true);
@@ -93,6 +123,7 @@ export default function TrekOverview({
       fitnessRequirement: trek.fitnessRequirement || "",
       whatsappGroupUrl: trek.whatsappGroupUrl || "",
     });
+    setTempCapacity(trek.maxCapacity.toString());
   }, [trek]);
 
   const publicUrl = captainSlug
@@ -249,26 +280,74 @@ export default function TrekOverview({
         </div>
 
         {/* Capacity */}
-        <div className="bg-card border border-border rounded-xl p-5">
-          <h3 className="text-xs uppercase text-text-dim tracking-wider font-medium mb-4">
-            Capacity
-          </h3>
+        <div className="bg-card border border-border rounded-xl p-5 relative">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xs uppercase text-text-dim tracking-wider font-medium">
+              Capacity
+            </h3>
+            {!editingCapacity && (
+              <button
+                onClick={() => setEditingCapacity(true)}
+                className="text-text-muted hover:text-accent transition-colors p-1 rounded hover:bg-charcoal/50 cursor-pointer"
+                title="Edit Capacity"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
           <div className="text-center">
-            <div className="flex items-baseline justify-center gap-1 mb-2">
-              <Users className="w-5 h-5 text-alpine-green mr-1" />
-              <span className="text-3xl font-bold text-text-primary">
-                {activeParticipants.length}
-              </span>
-              <span className="text-text-muted text-lg">/ {trek.maxCapacity}</span>
-            </div>
-            <ProgressBar
-              current={activeParticipants.length}
-              max={trek.maxCapacity}
-              className="mb-2"
-            />
-            <p className="text-xs text-text-muted">
-              {trek.maxCapacity - activeParticipants.length} spots remaining
-            </p>
+            {editingCapacity ? (
+              <div className="space-y-3 py-1">
+                <div className="flex items-center justify-center gap-2">
+                  <input
+                    type="number"
+                    min="1"
+                    value={tempCapacity}
+                    onChange={(e) => setTempCapacity(e.target.value)}
+                    className="w-20 text-center bg-charcoal border border-border rounded px-2 py-1 text-sm font-bold text-text-primary focus:outline-none focus:border-accent"
+                  />
+                  <button
+                    onClick={handleSaveCapacityLimit}
+                    disabled={savingCapacity}
+                    className="p-1.5 bg-alpine-green/10 hover:bg-alpine-green/20 text-alpine-green rounded transition-colors cursor-pointer"
+                    title="Save"
+                  >
+                    <Check className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingCapacity(false);
+                      setTempCapacity(trek.maxCapacity.toString());
+                    }}
+                    className="p-1.5 bg-danger/10 hover:bg-danger/20 text-danger rounded transition-colors cursor-pointer"
+                    title="Cancel"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <p className="text-[10px] text-text-dim leading-snug">
+                  Enter new maximum capacity limit for this trek.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-baseline justify-center gap-1 mb-2">
+                  <Users className="w-5 h-5 text-alpine-green mr-1" />
+                  <span className="text-3xl font-bold text-text-primary">
+                    {activeParticipants.length}
+                  </span>
+                  <span className="text-text-muted text-lg">/ {trek.maxCapacity}</span>
+                </div>
+                <ProgressBar
+                  current={activeParticipants.length}
+                  max={trek.maxCapacity}
+                  className="mb-2"
+                />
+                <p className="text-xs text-text-muted">
+                  {trek.maxCapacity - activeParticipants.length} spots remaining
+                </p>
+              </>
+            )}
           </div>
         </div>
 
