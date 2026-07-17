@@ -213,7 +213,7 @@ export default function DashboardLayout({
         )}
 
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto pb-20 md:pb-0">
+        <main className="flex-1 overflow-y-auto pb-20 md:pb-0 relative min-h-screen">
           {/* Mobile Header */}
           <div className="md:hidden sticky top-0 z-30 bg-charcoal/80 backdrop-blur-md border-b border-border px-4 py-3 flex items-center justify-between">
             <button
@@ -234,7 +234,7 @@ export default function DashboardLayout({
 
           {/* Migration Banner */}
           {showMigrationBanner && (
-            <div className="m-4 md:m-8 mb-0 px-4 py-3 bg-trail-orange/10 border border-trail-orange/20 rounded-xl flex items-center justify-between gap-3">
+            <div className="m-4 md:m-8 mb-0 px-4 py-3 bg-trail-orange/10 border border-trail-orange/20 rounded-xl flex items-center justify-between gap-3 relative z-10">
               <p className="text-sm text-trail-orange">
                 <span className="font-semibold">Found local demo data.</span> This data won&apos;t carry over to Supabase.
               </p>
@@ -247,7 +247,15 @@ export default function DashboardLayout({
             </div>
           )}
 
-          <div className="p-4 md:p-8">{children}</div>
+          <div className="p-4 md:p-8 relative z-10">{children}</div>
+
+          {/* Mountain Silhouette Background */}
+          <div className="absolute bottom-0 left-0 right-0 pointer-events-none opacity-[0.06] z-0 overflow-hidden flex items-end">
+            <svg viewBox="0 0 1440 250" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full min-w-[1000px] h-auto">
+              <path d="M0 250 L150 130 L320 210 L480 90 L650 190 L820 50 L980 150 L1150 30 L1300 170 L1440 90 L1440 250 Z" fill="#059669" />
+              <path d="M0 250 L200 170 L400 230 L600 130 L800 200 L1000 90 L1200 180 L1440 110 L1440 250 Z" fill="#2DD4A7" opacity="0.6" />
+            </svg>
+          </div>
         </main>
 
         {/* Mobile Bottom Nav */}
