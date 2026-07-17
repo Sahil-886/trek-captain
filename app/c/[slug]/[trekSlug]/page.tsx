@@ -27,6 +27,7 @@ import type { ItineraryItem } from "@/lib/types";
 import ViewLogger from "@/components/ViewLogger";
 import PublicItinerary from "./PublicItinerary";
 import ImageGallery from "./ImageGallery";
+import JoinTrekForm from "./JoinTrekForm";
 
 interface PageProps {
   params: Promise<{ slug: string; trekSlug: string }>;
@@ -563,26 +564,39 @@ export default async function PublicTrekDetailPage({ params }: PageProps) {
               <div className="p-4 bg-danger/10 border border-danger/25 rounded-xl text-center text-danger text-sm font-semibold">
                 This trek has been cancelled.
               </div>
-            ) : spotsLeft > 0 ? (
-              <a
-                href={bookingLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-3.5 bg-accent hover:bg-accent-hover text-white text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-accent/20 cursor-pointer text-center"
-              >
-                <MessageSquare className="w-4 h-4 fill-white" />
-                Book via WhatsApp
-              </a>
             ) : (
-              <a
-                href={bookingLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-3.5 bg-card border border-border text-text-muted hover:text-text-primary text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer text-center"
-              >
-                <MessageSquare className="w-4 h-4" />
-                Join Waitlist via WA
-              </a>
+              <div className="space-y-2">
+                {spotsLeft > 0 ? (
+                  <a
+                    href={bookingLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-3.5 bg-accent hover:bg-accent-hover text-white text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-accent/20 cursor-pointer text-center"
+                  >
+                    <MessageSquare className="w-4 h-4 fill-white" />
+                    Book via WhatsApp
+                  </a>
+                ) : (
+                  <a
+                    href={bookingLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-3.5 bg-card border border-border text-text-muted hover:text-text-primary text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer text-center"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    Join Waitlist via WA
+                  </a>
+                )}
+                
+                <JoinTrekForm
+                  trekId={trek.id}
+                  captainId={captain.id}
+                  brandName={captain.brand_name}
+                  trekTitle={trek.title}
+                  accentColor={accentColor}
+                  spotsLeft={spotsLeft}
+                />
+              </div>
             )}
 
             <p className="text-[10px] text-text-dim text-center leading-relaxed">

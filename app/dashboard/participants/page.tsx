@@ -1,30 +1,69 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Search, Phone, MessageCircle, X, ShieldAlert, Heart, Calendar } from "lucide-react";
+import { Search, Phone, MessageCircle, X, ShieldAlert, Heart, Calendar, Plus } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { StatusBadge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Modal } from "@/components/ui/Modal";
-import { getGlobalParticipants } from "@/lib/store";
+import { Button } from "@/components/ui/Button";
+import { Input, Select } from "@/components/ui/Input";
+import { useToast } from "@/components/ui/Toast";
+import { getGlobalParticipants, getTreks, addParticipant } from "@/lib/store";
 import { formatDate, getTelLink, getWhatsAppLink, formatINR } from "@/lib/utils";
-import type { Participant, Payment } from "@/lib/types";
+import type { Participant, Payment, Trek, ParticipantStatus } from "@/lib/types";
 
 export default function ParticipantsPage() {
+  const { toast } = useToast();
   const [participants, setParticipants] = useState<any[]>([]);
+  const [treks, setTreks] = useState<Trek[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterTab, setFilterTab] = useState<"all" | "unpaid" | "partial" | "paid">("all");
   const [selectedParticipant, setSelectedParticipant] = useState<any | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
+
+  const loadData = async () => {
+    setLoading(true);
+    const [data, treksList] = await Promise.all([
+      getGlobalParticipants(),
+      getTreks(),
+    ]);
+    setParticipants(data);
+    setTreks(treksList);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    async function load() {
-      const data = await getGlobalParticipants();
-      setParticipants(data);
-      setLoading(false);
-    }
-    load();
+    loadData();
   }, []);
+
+  const handleAddParticipant = async (data: {
+    trekId: string;
+    name: string;
+    phone: string;
+    email: string;
+    emergencyContact: string;
+    bloodGroup: string;
+    status: ParticipantStatus;
+  }) => {
+    const res = await addParticipant({
+      ...data,
+      medicalNotes: "",
+      age: null,
+      gender: "",
+      bloodGroup: data.bloodGroup || "",
+      emergencyContact: data.emergencyContact || "",
+      emergencyContactPhone: "",
+    });
+    if (res) {
+      await loadData();
+      setShowAdd(false);
+      toast("Participant added manually!");
+    } else {
+      toast("Failed to add participant");
+    }
+  };
 
   const filtered = participants.filter((p) => {
     const matchesSearch =
@@ -52,6 +91,13 @@ export default function ParticipantsPage() {
         <h1 className="text-2xl font-bold font-[family-name:var(--font-sora-family)]">
           Global Participant Directory
         </h1>
+        <Button
+          onClick={() => setShowAdd(true)}
+          icon={<Plus className="w-4 h-4" />}
+          className="w-full sm:w-auto"
+        >
+          Add Participant
+        </Button>
       </div>
 
       {/* Filter and Search Bar */}
@@ -307,6 +353,137 @@ export default function ParticipantsPage() {
           </div>
         </Modal>
       )}
+
+      <AddParticipantModal
+        isOpen={showAdd}
+        onClose={() => setShowAdd(false)}
+        treks={treks}
+        onAdd={handleAddParticipant}
+      />
     </div>
+  );
+}
+
+function AddParticipantModal({
+  isOpen,
+  onClose,
+  treks,
+  onAdd,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  treks: Trek[];
+  onAdd: (data: {
+    trekId: string;
+    name: string;
+    phone: string;
+    email: string;
+    emergencyContact: string;
+    bloodGroup: string;
+    status: ParticipantStatus;
+  }) => void;
+}) {
+  const [form, setForm] = useState({
+    trekId: treks[0]?.id || "",
+    name: "",
+    phone: "",
+    email: "",
+    emergencyContact: "",
+    bloodGroup: "O+",
+    status: "Confirmed" as ParticipantStatus,
+  });
+
+  // Keep trekId in sync when treks finish loading
+  useEffect(() => {
+    if (treks.length > 0 && !form.trekId) {
+      setForm((f) => ({ ...f, trekId: treks[0].id }));
+    }
+  }, [treks]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.trekId || !form.name.trim() || !form.phone.trim()) return;
+    onAdd({
+      trekId: form.trekId,
+      name: form.name,
+      phone: form.phone,
+      email: form.email,
+      emergencyContact: form.emergencyContact,
+      bloodGroup: form.bloodGroup,
+      status: form.status,
+    });
+    setForm({
+      trekId: treks[0]?.id || "",
+      name: "",
+      phone: "",
+      email: "",
+      emergencyContact: "",
+      bloodGroup: "O+",
+      status: "Confirmed",
+    });
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Add Participant">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Select
+          label="Select Trek *"
+          value={form.trekId}
+          onChange={(e) => setForm({ ...form, trekId: e.target.value })}
+          options={treks.map((t) => ({ value: t.id, label: `${t.title} (${formatDate(t.startDate)})` }))}
+          required
+        />
+        <Input
+          label="Full Name *"
+          placeholder="e.g. Priya Sharma"
+          value={form.name}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
+          required
+        />
+        <Input
+          label="Phone *"
+          placeholder="9876543210"
+          value={form.phone}
+          onChange={(e) => setForm({ ...form, phone: e.target.value })}
+          required
+        />
+        <Input
+          label="Email"
+          type="email"
+          placeholder="priya@email.com"
+          value={form.email}
+          onChange={(e) => setForm({ ...form, email: e.target.value })}
+        />
+        <Input
+          label="Emergency Contact"
+          placeholder="Phone number"
+          value={form.emergencyContact}
+          onChange={(e) => setForm({ ...form, emergencyContact: e.target.value })}
+        />
+        <Select
+          label="Blood Group"
+          value={form.bloodGroup}
+          onChange={(e) => setForm({ ...form, bloodGroup: e.target.value })}
+          options={["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((v) => ({ value: v, label: v }))}
+        />
+        <Select
+          label="Status"
+          value={form.status}
+          onChange={(e) => setForm({ ...form, status: e.target.value as ParticipantStatus })}
+          options={[
+            { value: "Confirmed", label: "Confirmed" },
+            { value: "Waitlist", label: "Waitlist" },
+          ]}
+        />
+        <div className="flex gap-3 pt-2">
+          <Button type="submit" className="flex-1">
+            Add Participant
+          </Button>
+          <Button type="button" variant="ghost" onClick={onClose}>
+            Cancel
+          </Button>
+        </div>
+      </form>
+    </Modal>
   );
 }
