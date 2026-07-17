@@ -33,15 +33,17 @@ export function StatCard({
   icon,
   trend,
   iconBg = "bg-trail-orange/10 text-trail-orange ring-trail-orange/20",
+  className = "bg-gradient-to-br from-card to-charcoal border-border/80 hover:border-trail-orange/20 hover:shadow-[0_8px_30px_rgba(5,150,105,0.06)]",
 }: {
   label: string;
   value: string;
   icon: React.ReactNode;
   trend?: string;
   iconBg?: string;
+  className?: string;
 }) {
   return (
-    <Card className="flex items-start gap-4 bg-gradient-to-br from-card to-charcoal border-border/80 hover:border-trail-orange/20 hover:shadow-[0_8px_30px_rgba(5,150,105,0.06)] transition-all duration-300">
+    <Card className={`flex items-start gap-4 transition-all duration-300 ${className}`}>
       <div className={`p-3 rounded-xl ring-1 shadow-sm ${iconBg}`}>
         {icon}
       </div>

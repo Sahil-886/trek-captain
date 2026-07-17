@@ -249,6 +249,10 @@ export default function DashboardLayout({
 
           <div className="p-4 md:p-8 relative z-10">{children}</div>
 
+          {/* Decorative Background Glows */}
+          <div className="absolute top-[10%] right-[10%] w-[350px] h-[350px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none z-0" />
+          <div className="absolute bottom-[20%] left-[20%] w-[300px] h-[300px] bg-amber-400/8 rounded-full blur-[100px] pointer-events-none z-0" />
+
           {/* Mountain Silhouette Background */}
           <div className="absolute bottom-0 left-0 right-0 pointer-events-none opacity-[0.06] z-0 overflow-hidden flex items-end">
             <svg viewBox="0 0 1440 250" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full min-w-[1000px] h-auto">

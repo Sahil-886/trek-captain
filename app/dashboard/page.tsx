@@ -459,24 +459,28 @@ export default function DashboardPage() {
               value={stats.activeTreks.toString()}
               icon={<Mountain className="w-5 h-5" />}
               iconBg="bg-emerald-500/10 text-emerald-600 ring-emerald-500/20"
+              className="bg-gradient-to-br from-white to-emerald-50/15 border-emerald-500/20 hover:border-emerald-500/40 hover:shadow-[0_8px_30px_rgba(16,185,129,0.06)]"
             />
             <StatCard
               label="Total Participants"
               value={stats.totalParticipants.toString()}
               icon={<Users className="w-5 h-5" />}
               iconBg="bg-blue-500/10 text-blue-600 ring-blue-500/20"
+              className="bg-gradient-to-br from-white to-blue-50/15 border-blue-500/20 hover:border-blue-500/40 hover:shadow-[0_8px_30px_rgba(59,130,246,0.06)]"
             />
             <StatCard
               label="Amount Collected"
               value={formatINR(stats.amountCollected)}
               icon={<IndianRupee className="w-5 h-5" />}
               iconBg="bg-amber-500/10 text-amber-600 ring-amber-500/20"
+              className="bg-gradient-to-br from-white to-amber-50/15 border-amber-500/20 hover:border-amber-500/40 hover:shadow-[0_8px_30px_rgba(245,158,11,0.06)]"
             />
             <StatCard
               label="Pending Dues"
               value={formatINR(stats.pendingDues)}
               icon={<AlertCircle className="w-5 h-5" />}
               iconBg="bg-rose-500/10 text-rose-600 ring-rose-500/20"
+              className="bg-gradient-to-br from-white to-rose-50/15 border-rose-500/20 hover:border-rose-500/40 hover:shadow-[0_8px_30px_rgba(244,63,94,0.06)]"
             />
           </div>
 
