@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Plus, Search, MapPin } from "lucide-react";
+import { Plus, Search, MapPin, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { DifficultyBadge, StatusBadge } from "@/components/ui/Badge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
@@ -11,7 +11,7 @@ import { Input, Select, Textarea } from "@/components/ui/Input";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { useToast } from "@/components/ui/Toast";
-import { getTreks, getParticipants, getPayments, createTrek } from "@/lib/store";
+import { getTreks, getParticipants, getPayments, createTrek, uploadImage } from "@/lib/store";
 import { formatINR, formatDate } from "@/lib/utils";
 import type { Trek, Participant, Payment, Difficulty, TrekStatus } from "@/lib/types";
 
@@ -187,6 +187,17 @@ function CreateTrekPanel({
     description: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
 
   const validate = () => {
     const errs: Record<string, string> = {};
@@ -200,23 +211,38 @@ function CreateTrekPanel({
     return Object.keys(errs).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-    onCreate({
-      title: form.title,
-      location: form.location,
-      region: form.region,
-      startDate: form.startDate,
-      endDate: form.endDate,
-      difficulty: form.difficulty,
-      pricePerPerson: Number(form.pricePerPerson),
-      maxCapacity: Number(form.maxCapacity),
-      coverColor: form.coverColor,
-      status: form.status,
-      meetingPoint: form.meetingPoint,
-      description: form.description,
-    });
+    setUploading(true);
+    try {
+      let coverUrl: string | null = null;
+      if (imageFile) {
+        coverUrl = await uploadImage(imageFile, "treks");
+      }
+      onCreate({
+        title: form.title,
+        location: form.location,
+        region: form.region,
+        startDate: form.startDate,
+        endDate: form.endDate,
+        difficulty: form.difficulty,
+        pricePerPerson: Number(form.pricePerPerson),
+        maxCapacity: Number(form.maxCapacity),
+        coverColor: form.coverColor,
+        status: form.status,
+        meetingPoint: form.meetingPoint,
+        description: form.description,
+        coverUrl,
+      });
+      // Reset image state
+      setImageFile(null);
+      setImagePreview(null);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -310,6 +336,36 @@ function CreateTrekPanel({
           onChange={(e) => setForm({ ...form, description: e.target.value })}
         />
         <div>
+          <label className="block text-sm font-medium text-text-muted mb-2">Trek Cover Image</label>
+          <div className="flex flex-col gap-3">
+            {imagePreview ? (
+              <div className="relative h-40 rounded-xl overflow-hidden border border-border group bg-charcoal">
+                <img src={imagePreview} alt="Cover Preview" className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => { setImageFile(null); setImagePreview(null); }}
+                  className="absolute top-2 right-2 bg-black/60 hover:bg-black p-1.5 rounded-full text-text-muted hover:text-white transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <label className="flex flex-col items-center justify-center h-32 rounded-xl border-2 border-dashed border-border hover:border-border-hover transition-colors cursor-pointer bg-charcoal/30">
+                <Upload className="w-6 h-6 text-text-dim mb-1" />
+                <span className="text-xs text-text-muted font-semibold">Upload Cover Image</span>
+                <span className="text-[10px] text-text-dim mt-0.5">JPEG, PNG up to 5MB</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+              </label>
+            )}
+          </div>
+        </div>
+
+        <div>
           <label className="block text-sm font-medium text-text-muted mb-2">Cover Color</label>
           <div className="flex gap-2">
             {COVER_COLORS.map((color) => (
@@ -326,7 +382,9 @@ function CreateTrekPanel({
           </div>
         </div>
         <div className="flex gap-3 pt-4">
-          <Button type="submit" className="flex-1">Create Trek</Button>
+          <Button type="submit" className="flex-1" disabled={uploading}>
+            {uploading ? "Creating Trek..." : "Create Trek"}
+          </Button>
           <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
         </div>
       </form>

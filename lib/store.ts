@@ -320,7 +320,7 @@ export async function getTrekById(id: string): Promise<Trek | null> {
 }
 
 export async function createTrek(
-  trek: Omit<Trek, "id" | "captainId" | "createdAt" | "slug" | "itinerary" | "packingList" | "inclusions" | "exclusions" | "coverUrl" | "gallery" | "highlights" | "notes" | "isPublished">
+  trek: Omit<Trek, "id" | "captainId" | "createdAt" | "slug" | "itinerary" | "packingList" | "inclusions" | "exclusions" | "gallery" | "highlights" | "notes" | "isPublished">
 ): Promise<Trek | null> {
   const userId = await getCurrentUserId();
   const slug = slugify(trek.title);
@@ -342,6 +342,7 @@ export async function createTrek(
       meeting_point: trek.meetingPoint || null,
       status: trek.status || "Upcoming",
       description: trek.description || null,
+      cover_url: trek.coverUrl || null,
     })
     .select()
     .single();
